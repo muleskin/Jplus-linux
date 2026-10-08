@@ -27,5 +27,8 @@ No certbot run is needed.
 | `JARVIS_TLS` | `on` (compose sets `off`) | `off` serves plain HTTP for a TLS-terminating proxy |
 | `JARVIS_CERT_DIR` | `/certs` | with TLS on: directory holding `fullchain.pem` + `privkey.pem`; without them a self-signed `localhost` cert is used |
 
+Settings saved from the web UI go to `/data/.env` (`JARVIS_ENV_FILE`); values in
+the host `.env` passed by compose take precedence over it.
+
 Data (`/data`) and the Claude Code login (`/home/jarvis`) are named volumes, so
 rebuilding the image keeps them.

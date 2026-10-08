@@ -33,7 +33,10 @@ RUN useradd --create-home --home-dir /home/jarvis --shell /bin/bash jarvis \
 COPY --from=build --chown=jarvis:jarvis /out/Jplus /app/Jplus
 COPY --chmod=755 docker/entrypoint.sh /usr/local/bin/jplus-entrypoint
 
+# JARVIS_ENV_FILE: the settings page's .env lives on the data volume, so what
+# it saves survives rebuilding the image (/app is part of the image).
 ENV JARVIS_DATA_DIR=/data \
+    JARVIS_ENV_FILE=/data/.env \
     JARVIS_HOST=0.0.0.0 \
     JARVIS_LISTEN_PORT=443 \
     JARVIS_DOMAIN=jarvis.oillie.cloud \

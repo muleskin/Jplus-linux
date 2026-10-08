@@ -108,7 +108,9 @@ public static partial class Server
     /// </summary>
     public static void BootLoadEnv()
     {
-        var envPath = Path.Combine(Py.AppDir, ".env");
+        // The same file the settings page writes (JARVIS_ENV_FILE, default <exe dir>/.env),
+        // or what it saved would be ignored at the next start.
+        var envPath = EnvFilePath();
         if (File.Exists(envPath))
         {
             foreach (var (k, v) in ParseEnvLines(File.ReadAllText(envPath)))
