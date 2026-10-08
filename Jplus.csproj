@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Jplus</RootNamespace>
+    <AssemblyName>Jplus</AssemblyName>
+    <Version>0.1.0</Version>
+    <LangVersion>latest</LangVersion>
+    <NoWarn>$(NoWarn);CS1998;CS8600;CS8601;CS8602;CS8603;CS8604;CS8618;CS8619;CS8620;CS8625;CS8629;CA1416</NoWarn>
+    <!-- No culture-sensitive APIs are used; invariant mode also drops the libicu dependency on Linux. -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
+
+    <!-- One EXE: self-contained, native SQLite bundled and extracted on first run. -->
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">linux-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.0" />
+    <PackageReference Include="System.Drawing.Common" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The built Vite frontend (index.html, dashboard.html, assets/) and the
+         templates the Python repo read from disk, all served from inside the EXE. -->
+    <EmbeddedResource Include="frontend\dist\**\*" />
+    <EmbeddedResource Include="Resources\**\*" />
+    <Compile Remove="frontend\**" />
+    <None Remove="frontend\**" />
+  </ItemGroup>
+
+  <!-- Build the frontend when dist is missing, so a clean clone still embeds it. -->
+  <Target Name="BuildFrontend" BeforeTargets="PrepareForBuild" Condition="!Exists('frontend\dist\index.html')">
+    <Exec Command="npm ci --no-audit --no-fund" WorkingDirectory="frontend" Condition="!Exists('frontend\node_modules')" />
+    <Exec Command="npm run build" WorkingDirectory="frontend" />
+    <ItemGroup>
+      <EmbeddedResource Include="frontend\dist\**\*" />
+    </ItemGroup>
+  </Target>
+
+</Project>

@@ -1,0 +1,18 @@
+{
+  "//": "YOUR MCP SERVERS. This is the one file JARVIS reads to decide what he is connected to. Paste a server's mcpServers entry inside the empty braces below, restart the server (python server.py), then ask him: 'what are you connected to?' — he answers from what actually started, and names anything that did not.",
+  "//why-only-this-file": "JARVIS runs with --strict-mcp-config, so the servers in ~/.claude.json, your project's .mcp.json and your Claude Desktop connectors are all ignored. Connecting something to JARVIS is a deliberate act: it is in here or it is nowhere.",
+  "//the-price": "Every tool a server exposes is described to JARVIS on every single turn, at roughly 250 tokens each — a twelve-tool server costs about 3,300. Connect what you will use.",
+  "//trust": "Whatever a server hands back is treated as untrusted, exactly like a web page: JARVIS will report what it said and will not act on it unprompted.",
+  "//example": {
+    "notion": {
+      "command": "npx",
+      "args": ["-y", "@notionhq/notion-mcp-server"],
+      "env": {"NOTION_TOKEN": "secret_put_yours_here"}
+    },
+    "linear": {
+      "type": "http",
+      "url": "https://mcp.linear.app/mcp"
+    }
+  },
+  "mcpServers": {}
+}

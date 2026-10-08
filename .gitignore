@@ -1,0 +1,10 @@
+bin/
+obj/
+publish/
+frontend/node_modules/
+frontend/dist/
+data/
+.env
+cert.pem
+key.pem
+*.user

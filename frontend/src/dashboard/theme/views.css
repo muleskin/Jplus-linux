@@ -1,0 +1,612 @@
+/* ===========================================================================
+   JARVIS DASHBOARD — VIEWS
+   ---------------------------------------------------------------------------
+   Everything here is layout or copy-specific to one view. If a rule in this
+   file starts looking generally useful, it belongs in primitives.css instead.
+   =========================================================================== */
+
+/* ── Shared: a sub-grouping inside a panel body (projects, buckets) ───────── */
+.group + .group { margin-top: var(--sp-5); }
+.group-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding-bottom: 6px;
+  margin-bottom: var(--sp-2);
+  border-bottom: var(--stroke) solid var(--edge);
+}
+.group-name {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--text);
+}
+.group-count {
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+.group-head::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 5px;
+  opacity: 0.5;
+  background-image: repeating-linear-gradient(
+    90deg, var(--edge) 0 1px, transparent 1px 8px);
+  -webkit-mask-image: linear-gradient(90deg, #000, transparent 55%);
+  mask-image: linear-gradient(90deg, #000, transparent 55%);
+}
+
+/* A document body: Markdown, transcripts, anything read rather than scanned.
+   Always fed with textContent — this is where arbitrary model output lands. */
+.doc {
+  font-family: var(--font-mono);
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
+  color: var(--text-dim);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow-y: auto;
+  padding: var(--sp-4);
+  background: var(--surface-sunk);
+  border: var(--stroke) solid var(--edge);
+  max-height: 42vh;
+}
+
+/* ── Runs ─────────────────────────────────────────────────────────────────── */
+/* Metric columns are width-locked so tokens and duration stack into readable
+   columns down the list instead of drifting with content length. (Tokens,
+   not dollars: nothing here was billed — see fmtRunTokens in main.ts.) */
+.run-dur  { --w: 66px; }
+.run-tokens { --w: 70px; }
+.run-when { --w: 52px; }
+.run-status { min-width: 76px; justify-content: center; }
+
+/* ── Sessions ─────────────────────────────────────────────────────────────────
+   The list on the left, one conversation's answer on the right. The layout is
+   the shared `.split` primitive in sheet mode — see SPLIT — so nothing here is
+   a third master-detail arrangement, only what is specific to a session.   */
+.session-reason {
+  margin-top: 2px;
+  font-size: var(--fs-base);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.session-summary {
+  margin-top: 2px;
+  font-size: var(--fs-base);
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.session-hand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+/* Width-locked metric columns, so ages and counts stack down the list. */
+.sess-when   { --w: 62px; }
+.sess-agents { --w: 104px; }
+.sess-count  { --w: 34px; }
+
+.fresh-group { margin-top: var(--sp-3); }
+.fresh-group > summary {
+  cursor: pointer;
+  list-style: none;
+  font-size: var(--fs-sm);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: var(--sp-1) 0;
+}
+.fresh-group > summary::marker,
+.fresh-group > summary::-webkit-details-marker { display: none; content: ""; }
+.fresh-group > summary::before { content: "+ "; color: var(--edge-hot); }
+.fresh-group[open] > summary::before { content: "− "; }
+.fresh-group > summary:hover { color: var(--text-dim); }
+.fresh-group .stack { margin-top: var(--sp-2); }
+
+/* ── The session detail panel ─────────────────────────────────────────────────
+   Read top to bottom it answers, in order: does this want me and why; what is
+   it working on, in words; how long has that been true; what did it touch;
+   what is running under it; where is it. Anything the watcher could not
+   measure says so rather than rendering a zero.                            */
+.sd-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+}
+.sd-name {
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  letter-spacing: var(--ls-wide);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.sd-where {
+  grid-column: 2 / -1;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  min-width: 0;
+}
+
+/* A labelled block inside the panel body. */
+.sd-block + .sd-block,
+.kv + .sd-block { margin-top: var(--sp-4); }
+.sd-label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+/* What the session or the user actually said. Someone else's transcript:
+   always textContent, and given a rail so it reads as a quotation rather
+   than as the dashboard's own words. */
+.sd-quote {
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+  border-left: var(--rail) solid var(--edge-strong);
+  padding-left: var(--sp-3);
+  max-height: 9.5em;
+  overflow-y: auto;
+}
+.sd-quote.is-title {
+  color: var(--text);
+  font-size: var(--fs-body);
+  border-left-color: var(--tone);
+  max-height: none;
+}
+.sd-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+.sd-agent-note {
+  margin-top: 2px;
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+.sd-id {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+/* ── Run detail pane ──────────────────────────────────────────────────────── */
+.pane-prompt {
+  font-size: var(--fs-base);
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+  border-left: var(--rail) solid var(--edge-strong);
+  padding-left: var(--sp-3);
+}
+.pane-actions { display: flex; gap: var(--sp-2); }
+.pane-meta {
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+/* Inside the pane a document is the whole point: let it have the height. */
+.pane .doc { max-height: none; flex: 1 1 auto; min-height: 40vh; }
+.transcript {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  max-height: 46vh;
+  overflow-y: auto;
+  padding: var(--sp-3);
+  background: var(--surface-sunk);
+  border: var(--stroke) solid var(--edge);
+}
+.ev {
+  padding: 2px 0 2px var(--sp-3);
+  border-left: var(--rail) solid transparent;
+  color: var(--text-faint);
+  overflow-wrap: anywhere;
+}
+.ev.assistant { color: var(--text-dim); border-left-color: var(--edge); }
+.ev.result { color: var(--signal-ok); border-left-color: var(--signal-ok); }
+
+/* ── Projects ─────────────────────────────────────────────────────────────── */
+/* Master-detail: the project list on the left, one project's everything on
+   the right. The layout itself is the shared `.split` primitive — Projects,
+   Specs and Sessions are one arrangement, learned once. Only the things that
+   are actually about a PROJECT live here. */
+.proj-detail-head { display: flex; align-items: center; gap: var(--sp-3); }
+.proj-detail-title {
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  letter-spacing: var(--ls-wide);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.proj-path-row { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+.proj-path-value {
+  font-family: var(--font-mono);
+  font-size: var(--fs-base);
+  color: var(--accent-bright);
+  background: var(--surface-sunk);
+  border: var(--stroke) solid var(--edge);
+  border-radius: var(--radius);
+  padding: 6px var(--sp-3);
+  overflow-x: auto;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.proj-path-note {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+  overflow-wrap: anywhere;
+}
+.proj-open-actions { margin-top: var(--sp-3); flex-wrap: wrap; }
+.proj-build-pills { display: flex; gap: var(--sp-2); flex-wrap: wrap; margin-bottom: var(--sp-3); }
+.proj-build-note { margin-top: var(--sp-2); font-size: var(--fs-base); color: var(--text-dim); }
+.proj-repo-headline { font-size: var(--fs-base); color: var(--text); margin-bottom: var(--sp-3); }
+.proj-repo-body { max-height: 30vh; }
+
+/* ── Memory ───────────────────────────────────────────────────────────────── */
+.memory-hint { font-size: var(--fs-base); color: var(--text-dim); margin-bottom: var(--sp-3); }
+.memory-path-row { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+.memory-path-value {
+  font-family: var(--font-mono);
+  font-size: var(--fs-base);
+  color: var(--accent-bright);
+  background: var(--surface-sunk);
+  border: var(--stroke) solid var(--edge);
+  border-radius: var(--radius);
+  padding: 6px var(--sp-3);
+  overflow-x: auto;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.memory-row-when { --w: 96px; }
+
+/* ── Specs (the review surface) ───────────────────────────────────────────────
+   Master-detail. Left: what JARVIS has written down. Right: the document,
+   with a number beside every top-level section.
+
+   The numbers are load-bearing, not ornament: they are how the user addresses
+   a section out loud ("change three"), and they are the same numbers JARVIS
+   reads back. So they are sized and coloured like an instrument's channel
+   labels — the loudest thing in the block after the heading itself. */
+.specs-count { --w: 56px; }
+.specs-when  { --w: 104px; }
+
+/* The document panel is flush so the status band can reach both edges. */
+.specs-doc {
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+}
+
+/* The band: which of the two states this document is in, in words. */
+.specs-band {
+  padding: var(--sp-4);
+  background: var(--tone-soft);
+  border-bottom: var(--stroke) solid var(--tone);
+}
+.specs-band-head { display: flex; align-items: center; gap: var(--sp-3); }
+.specs-band-when {
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.specs-band-line {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
+  color: var(--text);
+  max-width: 68ch;
+}
+
+.specs-progress { margin-top: var(--sp-4); max-width: 420px; }
+.specs-progress-note {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-base);
+  color: var(--text-dim);
+}
+.specs-progress-now {
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.specs-progress-steps { margin-left: auto; color: var(--text-faint); }
+
+/* How to talk to the page. Stated once, because without it the numbers read
+   as decoration rather than as the way to address a section. */
+.specs-howto {
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: var(--stroke) solid var(--edge);
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
+  color: var(--text-dim);
+}
+.specs-path {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-4);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--text-faint);
+  overflow-wrap: anywhere;
+}
+.specs-preamble { padding: 0 var(--sp-4); }
+
+.specs-sections { display: flex; flex-direction: column; }
+.specs-section {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  gap: var(--sp-4);
+  padding: var(--sp-5) var(--sp-4);
+  border-top: var(--stroke) solid var(--edge);
+}
+.specs-section:first-child { border-top: 0; }
+.specs-section-num {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xl);
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  text-shadow: var(--glow-text);
+  text-align: right;
+  padding-top: 1px;
+}
+.specs-section-body { min-width: 0; }
+.specs-section-title {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  letter-spacing: var(--ls-wide);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+/* The current task's number, quoted inline in the progress line. */
+.specs-jump-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-bright);
+}
+
+/* ── Rendered Markdown ────────────────────────────────────────────────────────
+   Built entirely by markdown.ts with createElement/textContent — there is no
+   innerHTML anywhere in its path, which is the whole reason it exists. */
+.md { font-size: var(--fs-base); line-height: var(--lh-body); color: var(--text-dim); }
+.md > :first-child { margin-top: 0; }
+.md > :last-child { margin-bottom: 0; }
+.md-p { margin: 0 0 var(--sp-3); overflow-wrap: anywhere; }
+.md-h {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-weight: 600;
+  letter-spacing: var(--ls-wide);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+/* The class carries the SOURCE level (md-h1..md-h6); the tag is capped at
+   h3..h6 so a document heading can never out-shout the panel around it. */
+.md-h1, .md-h2 { font-size: var(--fs-body); }
+.md-h3, .md-h4, .md-h5, .md-h6 {
+  font-size: var(--fs-sm);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.md-list { margin: 0 0 var(--sp-3); padding-left: var(--sp-5); }
+.md-list .md-list { margin: var(--sp-1) 0 0; }
+.md-item { margin: 0 0 var(--sp-1); overflow-wrap: anywhere; }
+.md-quote {
+  margin: 0 0 var(--sp-3);
+  padding-left: var(--sp-3);
+  border-left: var(--rail) solid var(--edge-strong);
+  color: var(--text-faint);
+}
+.md-rule {
+  margin: var(--sp-4) 0;
+  border: 0;
+  border-top: var(--stroke) solid var(--edge);
+}
+.md-code {
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-3);
+  background: var(--surface-sunk);
+  border: var(--stroke) solid var(--edge);
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--text-dim);
+  overflow-x: auto;
+}
+.md-inline-code {
+  padding: 1px 5px;
+  background: var(--surface-sunk);
+  border: var(--stroke) solid var(--edge);
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  color: var(--accent-bright);
+}
+.md-strong { color: var(--text); font-weight: 600; }
+.md-em { color: var(--text); font-style: italic; }
+
+/* A plan's checkboxes. State, never an input: nothing on this page is
+   editable, and a tick that looked clickable would be a lie. Shape (a filled
+   box with a mark, versus an empty outline) carries it without colour. */
+.md-task { list-style: none; display: flex; gap: var(--sp-2); align-items: baseline; }
+.md-list > .md-task { margin-left: calc(var(--sp-5) * -1); }
+.md-box {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: var(--stroke) solid var(--tone);
+  border-radius: var(--radius);
+  font-size: var(--fs-micro);
+  line-height: 1;
+  color: var(--ground);
+  background: none;
+}
+.md-task.is-done > .md-box { background: var(--tone); }
+.md-task.is-done > .md-task-text { color: var(--text-faint); }
+.md-task-text { min-width: 0; overflow-wrap: anywhere; }
+
+@media (max-width: 900px) {
+  .specs-doc { max-height: none; }
+  .specs-section { grid-template-columns: 34px minmax(0, 1fr); gap: var(--sp-3); }
+  .specs-section-num { font-size: var(--fs-lg); }
+}
+
+/* ── Usage ────────────────────────────────────────────────────────────────
+   The Usage tab. Layout only: every colour comes from a tone, and the two
+   states that matter — "not measured" and "stale" — are the `bar` and
+   `spark` primitives' own, not a variant invented here.               */
+
+/* A sentence about the numbers beside it: where they came from, how old
+   they are, what they do NOT include. Deliberately prose, not a badge: the
+   things worth saying here do not fit in a pill. */
+.usage-note {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  max-width: 78ch;
+  margin-bottom: var(--sp-4);
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
+  color: var(--text-dim);
+}
+.usage-note:last-child { margin-bottom: 0; }
+
+/* The window gauges, larger than the masthead's — this is the page where
+   they are the subject rather than a glance. */
+.usage-window-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--sp-5);
+}
+.usage-window .bar-label { font-size: var(--fs-label); }
+.usage-window .bar-value { font-size: var(--fs-body); color: var(--text); }
+.usage-window .bar-track { height: 9px; }
+.usage-when {
+  margin-top: 5px;
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* What the payload actually contains, said out loud. Its own band, because
+   a reader who does not find the gauge he expected needs to be told the
+   window is absent from the data rather than left to assume it is at zero. */
+.usage-contains {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 78ch;
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-4);
+  border-top: var(--stroke) dashed var(--edge);
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
+  color: var(--text-dim);
+}
+.usage-contains-label {
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* A left-aligned rank of readouts. `readout` right-aligns by default (it
+   lives in a right-hand masthead); here they head a page and read left. */
+.usage-figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-6);
+  margin-bottom: var(--sp-4);
+}
+.usage-figures .readout { align-items: flex-start; }
+
+/* The four token counts. Kept visually secondary to the totals above: they
+   are the breakdown, not the headline. */
+.usage-split {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-5);
+  padding: var(--sp-3) 0;
+  margin-bottom: var(--sp-4);
+  border-top: var(--stroke) solid var(--edge);
+  border-bottom: var(--stroke) solid var(--edge);
+}
+.usage-split-cell { display: flex; align-items: baseline; gap: var(--sp-2); }
+.usage-split-value {
+  font-size: var(--fs-body);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.usage-split-label {
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.usage-spark { margin-top: var(--sp-4); }
+
+.usage-more {
+  padding: var(--sp-3) var(--sp-4);
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+}
+
+/* The one dollar figure on the page. Footnote weight on purpose: it is an
+   API-list equivalent for calls nobody made, and it must never read as a
+   bill. See the comment at the top of usage.ts. */
+.usage-footnote {
+  max-width: 78ch;
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-3);
+  border-top: var(--stroke) dashed var(--edge);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+  color: var(--text-faint);
+}
+
+/* A row's inline share bar sits under the title, spanning to the right. */
+.row-body > .bar--slim { margin-top: 6px; }
+
+/* The session detail column's own stack: the head, the band, then the panels
+   that back them up. Lives here rather than on `.split-detail` because a
+   detail column is not always a stack of panels — Specs' is one document. */
+.sd { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+/* A session's NAME is its identity — the thing a person says out loud to
+   JARVIS — so it is the last part of the row allowed to truncate. Without
+   this the summary beside it shrank the name to "Ferra…". */
+.sess-row .row-title { min-width: 6.5em; }
+
+/* Inside the detail column a row's title is a SENTENCE — a subagent's own
+   one-line brief — not a name in a scannable list, so it wraps instead of
+   ellipsing. At 380px "Sweep the theme files for r…" tells you nothing. */
+.sd .row-title { white-space: normal; overflow: visible; overflow-wrap: anywhere; }

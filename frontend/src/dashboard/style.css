@@ -1,0 +1,13 @@
+/* JARVIS dashboard stylesheet — a manifest, nothing else.
+ *
+ * Load order matters: tokens define the names, shell paints the ground,
+ * primitives build the vocabulary, views arrange it. Anything view-specific
+ * goes in views.css; anything reusable goes in primitives.css; any new colour,
+ * size or duration goes in tokens.css first and is referenced by name.
+ *
+ * The same four files back frontend/dashboard-preview.html, so the preview
+ * page can never drift from what ships. */
+@import "./theme/tokens.css";
+@import "./theme/shell.css";
+@import "./theme/primitives.css";
+@import "./theme/views.css";

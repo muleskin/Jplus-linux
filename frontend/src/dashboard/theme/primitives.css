@@ -1,0 +1,863 @@
+/* ===========================================================================
+   JARVIS DASHBOARD — PRIMITIVES
+   ---------------------------------------------------------------------------
+   The vocabulary every view is built from. Each primitive documents what it
+   is for and the markup it expects. TS builders for all of them live in
+   `../ui.ts` — prefer those over hand-assembling markup, so the shapes stay
+   identical across views.
+
+   Rules that hold everywhere in here:
+     * State colour comes from `--tone` (see tokens.css). Never a raw hue.
+     * Colour is never the only carrier of meaning: a state always also has a
+       shape (dot geometry), a word (pill text) or a position (rail, order).
+     * Numbers that can change use `font-variant-numeric: tabular-nums`.
+     * Motion happens on CHANGE (.flash / bar width / dot pulse for "live"),
+       never as ambient decoration.
+   =========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   BRACKETS — the corner ticks that make a rectangle read as a projection.
+   For:      any framed box. `.panel` uses it; overlays and the detail pane
+             use it too.
+   Markup:   one element. Consumes its own `::before`, so an element with
+             `.brackets` must not define another `::before`.
+   Tune:     `--bracket-color` (default: --edge-hot), `--bracket-len`.
+   --------------------------------------------------------------------------- */
+.brackets, .panel { position: relative; }
+.brackets::before, .panel::before {
+  content: "";
+  position: absolute;
+  inset: -1px;                 /* sit on the host's own 1px frame */
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-image:
+    linear-gradient(var(--bracket-color, var(--edge-hot)) 0 100%),
+    linear-gradient(var(--bracket-color, var(--edge-hot)) 0 100%),
+    linear-gradient(var(--bracket-color, var(--edge-hot)) 0 100%),
+    linear-gradient(var(--bracket-color, var(--edge-hot)) 0 100%),
+    linear-gradient(var(--bracket-color, var(--edge-hot)) 0 100%),
+    linear-gradient(var(--bracket-color, var(--edge-hot)) 0 100%),
+    linear-gradient(var(--bracket-color, var(--edge-hot)) 0 100%),
+    linear-gradient(var(--bracket-color, var(--edge-hot)) 0 100%);
+  background-size:
+    var(--bracket-len) var(--stroke), var(--stroke) var(--bracket-len),
+    var(--bracket-len) var(--stroke), var(--stroke) var(--bracket-len),
+    var(--bracket-len) var(--stroke), var(--stroke) var(--bracket-len),
+    var(--bracket-len) var(--stroke), var(--stroke) var(--bracket-len);
+  background-position:
+    left top,     left top,
+    right top,    right top,
+    left bottom,  left bottom,
+    right bottom, right bottom;
+}
+
+/* ---------------------------------------------------------------------------
+   PANEL — a titled holographic container. The unit every view is made of.
+   For:      grouping a list, a readout cluster, a document body.
+   Markup:   <section class="panel">
+               <header class="panel-head">
+                 <h2 class="panel-title">ACTIVE</h2>
+                 <span class="panel-meta">3</span>      (optional, right side)
+               </header>
+               <div class="panel-body"> … </div>
+             </section>
+             The tick-rule between title and meta is drawn by CSS — no markup.
+   Variants: .panel--alert  something here wants the user (tone-coloured head)
+             .panel--flush  body has no padding (for full-bleed lists)
+             .panel--quiet  no brackets, no glow — a sub-grouping
+   --------------------------------------------------------------------------- */
+.panel {
+  border: var(--stroke) solid var(--edge);
+  background: var(--surface);
+  box-shadow: var(--glow-panel);
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 9px var(--sp-4);
+  border-bottom: var(--stroke) solid var(--edge);
+}
+.panel-title {
+  font-size: var(--fs-label);
+  font-weight: 500;
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+/* The tick rule: bridges title and count. Decoration, kept faint and faded
+   out before it reaches the number so it never competes with content. */
+.panel-head::after {
+  content: "";
+  order: 1;
+  flex: 1 1 auto;
+  min-width: var(--sp-4);
+  height: 5px;
+  opacity: 0.6;
+  background-image: repeating-linear-gradient(
+    90deg, var(--edge) 0 1px, transparent 1px 8px);
+  /* Fades out before it reaches the count, so the rule leads the eye across
+     rather than filling the head with texture. */
+  -webkit-mask-image: linear-gradient(90deg, #000, transparent 68%);
+  mask-image: linear-gradient(90deg, #000, transparent 68%);
+}
+.panel-meta {
+  order: 2;
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.panel-body { padding: var(--sp-4); }
+.panel--flush > .panel-body { padding: 0; }
+
+.panel--alert {
+  border-color: var(--tone);
+  --bracket-color: var(--tone);
+  box-shadow: var(--glow-panel), 0 0 24px -18px var(--tone);
+}
+.panel--alert > .panel-head {
+  background: var(--tone-soft);
+  border-bottom-color: var(--tone);
+}
+.panel--alert > .panel-head > .panel-title { color: var(--tone); }
+.panel--alert > .panel-head::after {
+  background-image: repeating-linear-gradient(
+    90deg, var(--tone) 0 1px, transparent 1px 8px);
+  opacity: 0.3;
+}
+.panel--alert > .panel-head > .panel-meta { color: var(--tone); }
+
+.panel--quiet { background: none; box-shadow: none; border-color: transparent; }
+.panel--quiet::before { content: none; }
+.panel--quiet > .panel-head { padding-left: 0; padding-right: 0; }
+.panel--quiet > .panel-body { padding: var(--sp-3) 0 0; }
+
+/* ---------------------------------------------------------------------------
+   READOUT — a labelled number. The stat blocks in the top bar are these.
+   For:      one measurement: a count, a cost, a duration, a token total.
+   Markup:   <div class="readout">
+               <div class="readout-value">14<span class="readout-unit">s</span></div>
+               <div class="readout-label">RUNS</div>
+             </div>
+   Variants: .readout--lg / .readout--sm  size
+             .readout--start             left-align (default is right)
+             tone-*                      colours the value (bad spend, ok count)
+   Note:     a readout with no tone class stays plain white — tone is opt-in
+             here precisely because most numbers carry no state.
+   --------------------------------------------------------------------------- */
+.readout {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  line-height: var(--lh-tight);
+  --readout-color: var(--text);
+}
+.readout--start { align-items: flex-start; }
+.readout.tone-accent, .readout.tone-ok, .readout.tone-warn,
+.readout.tone-bad, .readout.tone-idle, .readout.tone-dim {
+  --readout-color: var(--tone);
+}
+.readout-value {
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.005em;
+  color: var(--readout-color);
+}
+.readout--lg .readout-value { font-size: var(--fs-xl); }
+.readout--sm .readout-value { font-size: var(--fs-body); font-weight: 500; }
+.readout-unit {
+  font-size: 0.6em;
+  font-weight: 400;
+  color: var(--text-faint);
+  margin-left: 2px;
+  letter-spacing: var(--ls-wide);
+}
+.readout-label {
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   BAR — a horizontal gauge with a percentage.
+   For:      build progress, budget/usage consumption, any 0–100 quantity.
+   Markup:   <div class="bar">
+               <div class="bar-head">
+                 <span class="bar-label">CONTEXT</span>
+                 <span class="bar-value">71%</span>
+               </div>
+               <div class="bar-track"><div class="bar-fill"></div></div>
+             </div>
+             Set the fill with the inline custom property --pct: 71%.
+   Variants: tone-*                colours the fill
+             .bar--indeterminate   running, quantity unknown (sweeps)
+             .bar--slim            head omitted, track only (inline in a row)
+             .bar--unknown         NOT MEASURED: hatched track, no fill
+             .bar--stale           the reading is real but old: fill drained
+   ARIA:     the TS builder sets role="progressbar" + aria-valuenow, and swaps
+             aria-valuenow for aria-valuetext="not measured" on .bar--unknown.
+   Note:     .bar--unknown exists because an empty gauge and a 0% gauge are the
+             same picture, and one of them is a lie — a user who has burned 84%
+             of their week must never be shown a full-of-headroom gauge just
+             because nothing has reported yet. Hatching is the "no signal"
+             convention on an instrument, and it carries no tone.
+   --------------------------------------------------------------------------- */
+.bar { display: flex; flex-direction: column; gap: 5px; min-width: 120px; }
+.bar-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3); }
+.bar-label {
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bar-value {
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.bar-track {
+  position: relative;
+  height: 6px;
+  background: var(--surface-sunk);
+  border: var(--stroke) solid var(--edge);
+  overflow: hidden;
+}
+/* Ten segment ticks: turns a smooth bar into an instrument. */
+.bar-track::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    90deg, transparent 0 calc(10% - 1px), var(--ground) calc(10% - 1px) 10%);
+}
+.bar-fill {
+  height: 100%;
+  width: var(--pct, 0%);
+  background: var(--tone);
+  opacity: 0.9;
+  box-shadow: 0 0 10px -2px var(--tone), inset -1px 0 0 var(--accent-bright);
+  transition: width var(--dur-slow) var(--ease);
+}
+.bar--slim .bar-head { display: none; }
+/* No signal: hatched track, no fill, and the value says so in words. */
+.bar--unknown .bar-fill { display: none; }
+.bar--unknown .bar-track {
+  background-image: repeating-linear-gradient(
+    -45deg, transparent 0 4px, var(--text-faint) 4px 5px);
+  opacity: 0.55;
+}
+.bar--unknown .bar-value { color: var(--text-faint); font-style: italic; }
+/* Old news: the number stands, the light behind it does not. */
+.bar--stale .bar-fill { opacity: 0.35; box-shadow: none; }
+.bar--indeterminate .bar-fill {
+  width: 32%;
+  transition: none;
+  animation: bar-sweep 1.9s var(--ease) infinite;
+}
+@keyframes bar-sweep {
+  0%   { transform: translateX(-105%); }
+  100% { transform: translateX(320%); }
+}
+
+/* ---------------------------------------------------------------------------
+   ROW — a dense, scannable list line. Runs, sessions and memory files are all
+   rows, so a run and a session look like siblings rather than two designs.
+   For:      one record in a list.
+   Markup:   <div class="row">
+               <span class="row-lead">…dot…</span>          col 1, optional
+               <span class="row-main">
+                 <span class="row-title">jarvis</span>
+                 <span class="row-sub">wire up the gauge</span>
+               </span>
+               <span class="row-trail">                     col 3, right-aligned
+                 <span class="row-meta">4m 12s</span>
+               </span>
+               <div class="row-note">…</div>                spans cols 2–3
+               <div class="row-body">…</div>                spans cols 2–3
+             </div>
+   Variants: tone-*         lights the left rail in that tone
+             .row--action   clickable (pointer, hover lift, focus ring)
+             .row--attn     washed in the tone: this one wants you
+             .row--dim      de-emphasised (fresh/never-prompted records)
+   Tune:     .row-meta { --w: 62px } to column-align a metric across rows.
+   --------------------------------------------------------------------------- */
+.row {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, auto);
+  align-items: center;
+  column-gap: var(--sp-3);
+  row-gap: 5px;
+  padding: 9px var(--sp-3) 9px var(--sp-4);
+  border: var(--stroke) solid var(--edge);
+  background: var(--surface);
+  font-variant-numeric: tabular-nums;
+  transition: border-color var(--dur) var(--ease),
+              background-color var(--dur) var(--ease);
+}
+/* The left rail: position + colour, so state is legible in peripheral vision
+   and still readable with no colour at all (a rail is present or it is not). */
+.row::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: var(--rail);
+  background: var(--tone);
+  opacity: 0.25;
+  transition: opacity var(--dur) var(--ease);
+}
+.row.tone-accent::before, .row.tone-ok::before, .row.tone-warn::before,
+.row.tone-bad::before, .row.tone-idle::before {
+  opacity: 0.9;
+  box-shadow: var(--glow-sm);
+}
+.row-lead { display: flex; align-items: center; }
+.row-main { display: flex; align-items: baseline; gap: var(--sp-3); min-width: 0; }
+.row-title {
+  flex: 0 1 auto;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.row-sub {
+  flex: 1 1 auto;
+  color: var(--text-dim);
+  font-size: var(--fs-base);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* min-width:0 lets the trail shrink instead of pushing itself out of the
+   row; wrapping keeps a long pill + timestamp inside a narrow master
+   panel rather than bleeding over its right edge. */
+.row-trail {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  min-width: 0;
+}
+.row-meta {
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  text-align: right;
+  min-width: var(--w, auto);
+  white-space: nowrap;
+  /* Last resort, after shrinking and wrapping: clip rather than overflow. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.row-meta.is-strong { color: var(--text); }
+.row-note {
+  grid-column: 2 / -1;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.row-body { grid-column: 2 / -1; min-width: 0; }
+
+.row--action { cursor: pointer; }
+.row--action:hover { border-color: var(--edge-strong); background: var(--surface-raised); }
+.row--action:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
+.row--attn { background: var(--tone-soft); border-color: var(--tone); }
+.row--dim { opacity: 0.55; }
+.row--dim:hover { opacity: 1; }
+
+/* A vertical stack of rows with hairline separation. */
+.stack { display: flex; flex-direction: column; gap: var(--sp-1); }
+.stack--tight { gap: 2px; }
+
+/* ---------------------------------------------------------------------------
+   DOT — the state glyph. Six run states, seven session states.
+   For:      the leading marker on a row, or inline beside a label.
+   Markup:   <span class="dot dot--live tone-accent"></span>
+   Shapes (deliberately NOT colour-only):
+     .dot--live     filled circle + breathing halo   running / working
+     .dot--pending  hollow circle                    queued / fresh / shell
+     .dot--done     filled circle                    succeeded / idle
+     .dot--fault    filled diamond                   failed / timed_out / needs_you
+     .dot--void     hollow diamond, dim              cancelled / gone / unknown
+   Use `dotFor()` in ui.ts rather than picking shape + tone by hand.
+   --------------------------------------------------------------------------- */
+.dot {
+  position: relative;
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--tone);
+  box-shadow: var(--glow-sm);
+}
+.dot--pending { background: transparent; border: 1.5px solid var(--tone); box-shadow: none; }
+.dot--done { background: var(--tone); }
+.dot--fault { border-radius: 1px; transform: rotate(45deg); width: 8px; height: 8px; }
+.dot--void {
+  border-radius: 1px;
+  transform: rotate(45deg);
+  width: 8px; height: 8px;
+  background: transparent;
+  border: 1px solid var(--tone);
+  box-shadow: none;
+  opacity: 0.7;
+}
+/* The only ambient animation in the system, and it means exactly one thing:
+   this record is doing something right now. */
+.dot--live::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1px solid var(--tone);
+  opacity: 0;
+  animation: dot-breathe 2.1s var(--ease) infinite;
+}
+@keyframes dot-breathe {
+  0%   { opacity: 0.9; transform: scale(0.6); }
+  70%  { opacity: 0;   transform: scale(1.35); }
+  100% { opacity: 0;   transform: scale(1.35); }
+}
+
+/* ---------------------------------------------------------------------------
+   PILL — a short state word in a bordered capsule. Always pair a dot with a
+   pill (or with adjacent text) so state never rests on colour alone.
+   For:      run status, session state, "not steerable", counts on a tab.
+   Markup:   <span class="pill tone-bad">FAILED</span>
+   Variants: .pill--ghost  neutral edge, dim text (a non-state label)
+             .pill--solid  filled — reserve for counts that must be spotted
+   --------------------------------------------------------------------------- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border: var(--stroke) solid var(--tone);
+  border-radius: var(--radius);
+  background: var(--tone-soft);
+  color: var(--tone);
+  font-size: var(--fs-micro);
+  font-weight: 500;
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.pill--ghost { border-color: var(--edge); background: none; color: var(--text-dim); }
+.pill--solid {
+  background: var(--tone);
+  border-color: transparent;
+  color: var(--ground);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------------------
+   TAB BAR — the view switcher. Sized to take six tabs without redesign; it
+   scrolls rather than wraps if it ever takes more.
+   For:      top-level navigation only.
+   Markup:   <nav class="tabs">
+               <button class="tab active" data-view="runs">Runs
+                 <span class="tab-badge">3</span>            (optional)
+               </button>
+             </nav>
+             The 01/02/03 index is a CSS counter — never put it in markup.
+   State:    `.active` on the button; the TS helper also sets aria-selected.
+   --------------------------------------------------------------------------- */
+.tabs {
+  display: flex;
+  align-items: stretch;
+  counter-reset: tab;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 10px var(--sp-4);
+  background: none;
+  border: 0;
+  border-bottom: var(--stroke) solid var(--edge);
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: var(--fs-label);
+  font-weight: 500;
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease);
+}
+.tab::before {
+  counter-increment: tab;
+  content: counter(tab, decimal-leading-zero);
+  font-size: var(--fs-micro);
+  letter-spacing: 0;
+  color: var(--text-faint);
+}
+.tab:hover { color: var(--text); background: none; box-shadow: none; }
+.tab:focus-visible { outline: 1px solid var(--accent); outline-offset: -2px; }
+.tab.active { color: var(--accent-bright); text-shadow: var(--glow-text); }
+.tab.active::before { color: var(--accent); }
+.tab.active::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 10px -1px var(--accent);
+}
+.tab-badge {
+  --tone: var(--signal-bad);
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--tone);
+  color: var(--ground);
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------------------
+   FIELD LIST — key/value detail, as in the run detail pane.
+   Markup:   <dl class="kv"><dt>status</dt><dd>running · 42s</dd></dl>
+   --------------------------------------------------------------------------- */
+.kv { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 7px var(--sp-4); }
+.kv dt {
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding-top: 2px;
+}
+.kv dd {
+  font-size: var(--fs-base);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* ---------------------------------------------------------------------------
+   BUTTON — bare <button> and .btn are the same thing, so a button built
+   without the class still looks right.
+   Variants: tone-* recolours the hover wash; .btn--quiet for tertiary actions.
+   --------------------------------------------------------------------------- */
+button, .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: none;
+  border: var(--stroke) solid var(--edge-strong);
+  border-radius: var(--radius);
+  /* --tone defaults to accent, so an untoned button is accent and
+     `tone-bad` alone is enough to make a destructive action look like one. */
+  color: var(--tone);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease),
+              box-shadow var(--dur) var(--ease),
+              background-color var(--dur) var(--ease);
+}
+button:hover, .btn:hover { border-color: var(--tone); background: var(--tone-soft); box-shadow: var(--glow-sm); }
+button:focus-visible, .btn:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
+button:disabled, .btn:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
+.btn--quiet { border-color: transparent; color: var(--text-dim); }
+.tab { border-radius: 0; }
+
+/* ---------------------------------------------------------------------------
+   EMPTY — a calm "nothing here", never an error.
+   Markup:   <div class="empty">Nothing running.</div>   (.empty--sm inline)
+   --------------------------------------------------------------------------- */
+.empty {
+  padding: var(--sp-5) var(--sp-4);
+  border: var(--stroke) dashed var(--edge);
+  color: var(--text-faint);
+  font-size: var(--fs-base);
+}
+.empty--sm { padding: var(--sp-2) var(--sp-3); font-size: var(--fs-sm); }
+
+/* ---------------------------------------------------------------------------
+   FLASH — the change signal. Add the class, it removes itself on animationend
+   (see `flash()` in ui.ts). Use it when a value or a record CHANGES, so the
+   eye is drawn to the delta and nowhere else.
+   --------------------------------------------------------------------------- */
+.flash { animation: flash-box var(--dur-slow) var(--ease) 1; }
+@keyframes flash-box {
+  0%   { background-color: var(--tone-soft); box-shadow: inset 0 0 0 1px var(--tone), var(--glow-md); }
+  100% { background-color: transparent; box-shadow: none; }
+}
+.flash-value { animation: flash-glyph var(--dur-slow) var(--ease) 1; }
+@keyframes flash-glyph {
+  0%   { color: var(--accent-bright); text-shadow: var(--glow-text); }
+  100% { color: inherit; text-shadow: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   SPARKLINE — a small history, drawn as COLUMNS.
+   For:      a run of daily totals under a headline number.
+   Markup:   <div class="spark">
+               <div class="spark-head">
+                 <span class="spark-label">DAILY TOKENS</span>
+                 <span class="spark-range">5 Aug — 3 Sep</span>
+               </div>
+               <svg class="spark-svg"><rect class="spark-bar"/>…</svg>
+             </div>
+             Built by `sparkline()` in ui.ts with createElementNS — there is
+             no charting library in this project and there must not be one.
+   Variants: .spark--empty   no history at all: hatched, and the range says so
+             .spark-bar.is-gap  a day with no reading — a hairline, not a
+                                column of zero height, so an absence looks
+                                different from a measured nothing
+   Note:     columns rather than a line because the values are discrete days.
+             A line drawn between two days asserts values for the hours in
+             between that nobody measured — the same reason `bar` has
+             `unknown()` instead of drawing 0%.
+   --------------------------------------------------------------------------- */
+.spark { display: flex; flex-direction: column; gap: 6px; }
+.spark-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.spark-label {
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.spark-range {
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+.spark-svg {
+  display: block;
+  width: 100%;
+  background: var(--surface-sunk);
+  border: var(--stroke) solid var(--edge);
+}
+.spark-bar { fill: var(--tone); opacity: 0.85; }
+.spark-bar.is-gap { fill: var(--text-faint); opacity: 0.28; }
+/* No history: the same hatch `bar--unknown` uses, and for the same reason —
+   an empty chart and a chart of zeroes are the same picture. */
+.spark--empty .spark-svg {
+  height: 44px;
+  background-image: repeating-linear-gradient(
+    -45deg, transparent 0 4px, var(--text-faint) 4px 5px);
+  opacity: 0.5;
+}
+.spark--empty .spark-range { font-style: italic; }
+
+/* ---------------------------------------------------------------------------
+   CALLOUT — one toned band that states, in words, the single thing a reader
+   must not miss about the record they are looking at.
+   For:      the top of a detail panel. Sessions uses it to answer "does this
+             want me, and why?" — the question the whole view exists for.
+   Markup:   <div class="callout tone-bad callout--loud">
+               <div class="callout-head">
+                 <span class="dot dot--fault tone-bad"></span>
+                 <span class="callout-label">Waiting on you</span>
+                 <span class="callout-meta">51m</span>
+               </div>
+               <p class="callout-body">…the reason, verbatim…</p>
+               <div class="callout-foot">…pills, a second line…</div>
+             </div>
+   Variants: .callout--loud  the tone floods the band. Reserve it for a state
+                             that is costing the user something right now;
+                             everything else stays quiet so that one carries.
+   Note:     tone is never the only signal — the dot's SHAPE and the label's
+             WORDS say the same thing with colour switched off.
+   --------------------------------------------------------------------------- */
+.callout {
+  padding: var(--sp-4);
+  border: var(--stroke) solid var(--edge);
+  border-left: var(--rail) solid var(--tone);
+  background: var(--surface);
+}
+.callout--loud {
+  border-color: var(--tone);
+  border-left-width: var(--rail);
+  background: var(--tone-soft);
+  box-shadow: var(--glow-sm);
+}
+.callout-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+.callout-label {
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--tone);
+}
+.callout-meta {
+  margin-left: auto;
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* The reason itself. Bigger than body copy on purpose: on a `needs you` band
+   this sentence is the entire point of the Sessions view. */
+.callout-body {
+  font-size: var(--fs-lg);
+  line-height: 1.4;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.callout--loud .callout-body { text-shadow: var(--glow-text); }
+.callout-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  margin-top: var(--sp-3);
+}
+.callout-note { font-size: var(--fs-sm); color: var(--text-dim); }
+
+/* ---------------------------------------------------------------------------
+   SPLIT — the master-detail layout. THE one two-column arrangement in this
+   dashboard: Projects, Specs and Sessions are all this, so a reader who
+   learns it once has learned all three.
+   For:      a list beside the one thing that list selects.
+   Markup:   <div class="split">
+               <div class="split-master split-stick"> …panels… </div>
+               <div class="split-detail"> …panels… </div>
+             </div>
+   Shapes:   (default)      a narrow index beside a wide document (Specs,
+                            Projects — the detail is the thing being read)
+             .split--aside  a wide list beside a narrow inspector (Sessions —
+                            the LIST is the thing being read, and the detail
+                            answers a question about one line of it)
+   Sticky:   .split-stick pins whichever column should stay put while the
+             other scrolls. Dropped on narrow screens, where nothing scrolls
+             past anything.
+   Selected: mark the chosen row with `.is-open` — see ROW.
+   NOTHING MOVES ON SELECT. Both columns are in the grid whether or not
+   anything is selected; the detail column shows a placeholder instead. A
+   layout that reflows under the cursor makes the list unusable exactly while
+   you are working down it.
+   --------------------------------------------------------------------------- */
+.split {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: var(--sp-5);
+  align-items: start;
+}
+.split[hidden] { display: none; }
+.split--aside { grid-template-columns: minmax(0, 1fr) minmax(320px, 400px); }
+.split-master,
+.split-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  min-width: 0;
+}
+/* A sticky column TALLER than the viewport has to scroll on its own, or its
+   last panel is unreachable: it pins at the top and the page scrolls past
+   underneath, leaving the bottom permanently off-screen. */
+.split-stick {
+  position: sticky;
+  top: var(--sp-5);
+  max-height: calc(100vh - var(--sp-7));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* The row you have open. The left rail already carries state, so "open" is
+   said with the surface and the edge rather than with another colour. */
+.row.is-open {
+  background: var(--surface-raised);
+  border-color: var(--edge-hot);
+}
+
+/* The detail arrives. Short, once, and only when the CONTENT changes — the
+   grid itself never animates, because it never moves. Reduced motion kills
+   the animation outright (tokens.css); nothing here depends on it. */
+.split-detail > .split-enter { animation: split-in var(--dur) var(--ease) 1; }
+@keyframes split-in {
+  from { opacity: 0; transform: translateX(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* The scrim only exists in sheet mode; docked, it cannot swallow a click. */
+.split-scrim { display: none; }
+
+/* ── Narrow: the detail becomes a sheet ──────────────────────────────────────
+   Below 900px a 320px column beside a list is two unusable columns. A plain
+   split simply stacks — the detail falls under the list, which is what
+   Projects and Specs want, since you go there to READ the detail. A split
+   built with `dismiss` instead turns its detail into a right-hand sheet over
+   a scrim, because its master is a live monitor you must not lose your place
+   in. Escape, the Close control and a tap on the scrim all put it away.
+
+   `.is-sheet` is set by `splitView` at the same breakpoint, which also moves
+   the two nodes to <body>: `.shell-main` is a stacking context, so a fixed
+   sheet left inside it paints UNDER the sticky masthead and loses its own
+   head. These rules therefore do not need the media query — the class only
+   ever exists when the query matches — and must not assume a parent.      */
+@media (max-width: 900px) {
+  .split, .split--aside { grid-template-columns: minmax(0, 1fr); }
+  .split-stick { position: static; max-height: none; overflow: visible; }
+}
+
+.split-detail.is-sheet {
+  display: none;
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  z-index: 31;
+  width: min(420px, 92vw);
+  padding: var(--sp-4);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--scrim);
+  backdrop-filter: blur(14px);
+  border-left: var(--stroke) solid var(--edge-strong);
+  box-shadow: -30px 0 60px -40px rgba(0, 0, 0, 0.9);
+}
+.split-detail.is-sheet.is-open {
+  display: flex;
+  animation: sheet-in var(--dur) var(--ease) 1;
+}
+.split-scrim.is-sheet.is-open {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: var(--scrim-soft);
+  animation: scrim-in var(--dur-fast) var(--ease) 1;
+}
+@keyframes sheet-in { from { transform: translateX(18px); opacity: 0; } }
+@keyframes scrim-in { from { opacity: 0; } }

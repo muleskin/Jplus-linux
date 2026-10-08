@@ -1,0 +1,275 @@
+/* ===========================================================================
+   JARVIS DASHBOARD — SHELL
+   ---------------------------------------------------------------------------
+   Page chrome: the ground and its texture, the masthead, the tab strip, the
+   content column, the sliding detail pane and the connection banner.
+
+   The texture is deliberately near-invisible — two fixed overlays at 2–4%
+   alpha. It should read as "this is projected light", not as a filter. If you
+   can see the scan lines from across the room, turn them down.
+   =========================================================================== */
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* `hidden` must actually hide. Primitives that set their own `display`
+   (.pill, .tab-badge, .readout, .row …) silently outrank the UA rule for
+   [hidden], so every `node.hidden = true` in the TS was a no-op on them —
+   which is why the Sessions tab sat there wearing a badge that said 0. */
+[hidden] { display: none !important; }
+
+html, body { min-height: 100%; }
+
+body {
+  background: var(--ground);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Ambient projection: a cool wash from the top-left, a grid so faint it only
+   registers as depth, and a vignette that keeps the edges out of the way. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 12% -10%, rgba(76, 168, 232, 0.10), transparent 60%),
+    radial-gradient(90% 70% at 100% 0%, rgba(76, 168, 232, 0.05), transparent 55%),
+    repeating-linear-gradient(0deg, rgba(124, 196, 255, 0.022) 0 1px, transparent 1px 44px),
+    repeating-linear-gradient(90deg, rgba(124, 196, 255, 0.022) 0 1px, transparent 1px 44px);
+}
+/* Scan lines. Static — a moving scan line is a screensaver. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 3px);
+  opacity: 0.5;
+}
+
+/* ── Masthead ─────────────────────────────────────────────────────────────── */
+.shell-head {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: linear-gradient(var(--ground) 78%, rgba(5, 7, 12, 0.86));
+  backdrop-filter: blur(6px);
+  border-bottom: var(--stroke) solid var(--edge);
+}
+.shell-head-top {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  padding: var(--sp-4) var(--sp-5) var(--sp-3);
+  max-width: var(--shell-max);
+  margin: 0 auto;
+}
+.brand { display: flex; align-items: baseline; gap: var(--sp-3); min-width: 0; }
+.brand-mark {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  letter-spacing: var(--ls-title);
+  text-transform: uppercase;
+  color: var(--accent-bright);
+  text-shadow: var(--glow-text);
+}
+.brand-sub {
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+/* Link state, beside the wordmark: dot + word, never colour alone. */
+.link-state {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--tone);
+}
+
+/* ── The masthead readout cluster ──────────────────────────────────────────
+   Two zones, hairline-divided, in priority order: how much of the
+   subscription is left, then what is happening right now and how much ran
+   today. The limits are the hero because they are the thing the user cannot
+   find out any other way — and the thing that decides whether JARVIS can
+   answer at all. There is no spend here: JARVIS runs on a subscription and
+   bills nobody, so a dollar figure would be a number that means nothing.  */
+.shell-stats {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--sp-5);
+}
+.stat-zone { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
+.stat-zone + .stat-zone {
+  padding-left: var(--sp-5);
+  border-left: var(--stroke) solid var(--edge);
+}
+.stat-zone-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 15px;
+}
+.stat-zone-title {
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+/* "measured 3m ago" / "last measured 4h ago" — when the reading is from, in
+   words, always present. A gauge with no provenance is a rumour. */
+.stat-zone-note {
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-wide);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* The live indicator, sitting in the Today zone's head. */
+.stat-now {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--tone);
+  white-space: nowrap;
+}
+
+.usage-gauges { display: flex; gap: var(--sp-4); }
+.usage-gauge { display: flex; flex-direction: column; gap: 4px; width: 190px; }
+.usage-gauge .bar { min-width: 0; }
+/* The reset time, under its own gauge: "resets 4:20pm", "resets Thu 9:00am". */
+.usage-when {
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-wide);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.usage-unavailable {
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+  align-self: center;
+}
+
+.stat-figures { display: flex; align-items: flex-end; gap: var(--sp-4); }
+.shell-tabs {
+  max-width: var(--shell-max);
+  margin: 0 auto;
+  padding: 0 var(--sp-5);
+}
+
+/* ── Content column ───────────────────────────────────────────────────────── */
+.shell-main {
+  position: relative;
+  z-index: 1;
+  max-width: var(--shell-max);
+  margin: 0 auto;
+  padding: var(--sp-6) var(--sp-5) var(--sp-8);
+}
+.view { display: flex; flex-direction: column; gap: var(--sp-5); }
+.view[hidden] { display: none; }
+
+/* ── Detail pane: the slide-in reader for a run or a memory file ──────────── */
+.pane {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  z-index: 30;
+  width: var(--pane-width);
+  display: flex;
+  flex-direction: column;
+  background: var(--scrim);
+  backdrop-filter: blur(14px);
+  border-left: var(--stroke) solid var(--edge-strong);
+  box-shadow: -30px 0 60px -40px rgba(0, 0, 0, 0.9);
+}
+.pane[hidden] { display: none; }
+.pane-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  border-bottom: var(--stroke) solid var(--edge);
+}
+.pane-title {
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  letter-spacing: var(--ls-wide);
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pane-close { margin-left: auto; flex: none; }
+.pane-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding: var(--sp-5);
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* ── Connection banner ────────────────────────────────────────────────────── */
+.banner {
+  position: fixed;
+  left: 50%;
+  bottom: var(--sp-4);
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 7px var(--sp-4);
+  border: var(--stroke) solid var(--tone);
+  border-radius: var(--radius);
+  background: rgba(5, 7, 12, 0.94);
+  box-shadow: var(--glow-md);
+  color: var(--tone);
+  font-size: var(--fs-sm);
+  letter-spacing: var(--ls-wide);
+}
+.banner[hidden] { display: none; }
+
+/* ── Scrollbars: thin, cool, out of the way ───────────────────────────────── */
+* { scrollbar-width: thin; scrollbar-color: var(--edge-strong) transparent; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--edge-strong); border-radius: 999px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ── Narrow screens ───────────────────────────────────────────────────────── */
+@media (max-width: 980px) {
+  /* The divider is a vertical rule between two columns; once they stack it
+     would be a rule across the middle of nothing. */
+  .stat-zone + .stat-zone { padding-left: 0; border-left: 0; }
+  .shell-stats { gap: var(--sp-4); }
+}
+@media (max-width: 720px) {
+  .shell-head-top { flex-wrap: wrap; gap: var(--sp-3); }
+  .shell-stats { width: 100%; margin-left: 0; gap: var(--sp-4); }
+  .usage-gauge { width: auto; flex: 1 1 140px; }
+  .usage-gauges { flex: 1 1 auto; }
+  .shell-main { padding: var(--sp-5) var(--sp-3) var(--sp-8); }
+  .shell-tabs { padding: 0 var(--sp-3); }
+}

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JARVIS · Run Control</title>
+    <link rel="stylesheet" href="/src/dashboard/style.css" />
+  </head>
+  <body>
+    <!-- Masthead: identity, link state, and the day's readouts. -->
+    <header class="shell-head">
+      <div class="shell-head-top">
+        <div class="brand">
+          <span class="brand-mark">JARVIS</span>
+          <span class="brand-sub">Run Control</span>
+        </div>
+        <div id="link-state" class="link-state tone-ok">
+          <span class="dot dot--done tone-ok" aria-hidden="true"></span>
+          <span id="link-state-text">Link OK</span>
+        </div>
+        <div id="stats" class="shell-stats"></div>
+      </div>
+
+      <nav id="view-tabs" class="tabs shell-tabs" role="tablist">
+        <button id="tab-runs" class="tab active" data-view="runs"
+                role="tab" aria-selected="true">Runs</button>
+        <button id="tab-sessions" class="tab" data-view="sessions"
+                role="tab" aria-selected="false">
+          Sessions
+          <span id="sessions-badge" class="tab-badge" hidden></span>
+        </button>
+        <button id="tab-memory" class="tab" data-view="memory"
+                role="tab" aria-selected="false">Memory</button>
+        <button id="tab-specs" class="tab" data-view="specs"
+                role="tab" aria-selected="false">
+          Specs
+          <span id="specs-tab-badge" class="tab-badge" hidden></span>
+        </button>
+        <button id="tab-projects" class="tab" data-view="projects"
+                role="tab" aria-selected="false">
+          Projects
+          <span id="projects-tab-badge" class="tab-badge" hidden></span>
+        </button>
+        <button id="tab-usage" class="tab" data-view="usage"
+                role="tab" aria-selected="false">Usage</button>
+      </nav>
+    </header>
+
+    <main class="shell-main">
+      <!-- ── RUNS ────────────────────────────────────────────────────────── -->
+      <div id="runs-view" class="view">
+        <!-- Failures come first: the thing you must not scroll past. Hidden
+             entirely when there is nothing wrong. -->
+        <section id="attention-section" class="panel panel--alert tone-bad" hidden>
+          <header class="panel-head">
+            <h2 class="panel-title">Needs Attention</h2>
+            <span id="attention-meta" class="panel-meta"></span>
+          </header>
+          <div class="panel-body">
+            <div id="attention-list" class="stack"></div>
+          </div>
+        </section>
+
+        <section id="active-section" class="panel">
+          <header class="panel-head">
+            <h2 class="panel-title">Active</h2>
+            <span id="active-meta" class="panel-meta"></span>
+          </header>
+          <div class="panel-body">
+            <div id="active-list" class="stack"></div>
+          </div>
+        </section>
+
+        <section id="history-section" class="panel">
+          <header class="panel-head">
+            <h2 class="panel-title">History</h2>
+            <span id="history-meta" class="panel-meta"></span>
+          </header>
+          <div class="panel-body">
+            <div id="history-list" class="stack"></div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ── SESSIONS ────────────────────────────────────────────────────── -->
+      <div id="sessions-view" class="view" hidden></div>
+
+      <!-- ── MEMORY ──────────────────────────────────────────────────────── -->
+      <div id="memory-view" class="view" hidden>
+        <div id="memory-banner" class="empty" hidden></div>
+        <div id="memory-unavailable" class="empty" hidden>
+          Memory view isn't available yet — the backend endpoint hasn't shipped.
+        </div>
+
+        <div id="memory-body" class="view">
+          <section id="memory-path-section" class="panel">
+            <header class="panel-head">
+              <h2 class="panel-title">On Disk</h2>
+            </header>
+            <div class="panel-body">
+              <div id="memory-path"></div>
+            </div>
+          </section>
+
+          <section id="journal-latest-section" class="panel tone-accent" hidden>
+            <header class="panel-head">
+              <h2 class="panel-title">Latest Handover</h2>
+              <span id="journal-latest-meta" class="panel-meta"></span>
+            </header>
+            <div class="panel-body">
+              <pre id="journal-latest-body" class="doc"></pre>
+            </div>
+          </section>
+
+          <section id="memory-index-section" class="panel">
+            <header class="panel-head">
+              <h2 class="panel-title">Carried Into Every Conversation</h2>
+              <span id="memory-index-meta" class="panel-meta"></span>
+            </header>
+            <div class="panel-body">
+              <div id="memory-index-list" class="stack"></div>
+            </div>
+          </section>
+
+          <section id="memory-files-section" class="panel">
+            <header class="panel-head">
+              <h2 class="panel-title">Memories</h2>
+              <span id="memory-files-meta" class="panel-meta"></span>
+            </header>
+            <div class="panel-body">
+              <div id="memory-files-list" class="stack"></div>
+            </div>
+          </section>
+
+          <section id="memory-projects-section" class="panel">
+            <header class="panel-head">
+              <h2 class="panel-title">Projects</h2>
+              <span id="memory-projects-meta" class="panel-meta"></span>
+            </header>
+            <div class="panel-body">
+              <div id="memory-projects-list" class="stack"></div>
+            </div>
+          </section>
+
+          <section id="memory-journal-section" class="panel">
+            <header class="panel-head">
+              <h2 class="panel-title">Journal</h2>
+              <span id="memory-journal-meta" class="panel-meta"></span>
+            </header>
+            <div class="panel-body">
+              <div id="memory-journal-list" class="stack"></div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- ── PROJECTS ────────────────────────────────────────────────────── -->
+      <div id="projects-view" class="view" hidden>
+        <div id="proj-banner" class="empty" hidden></div>
+        <div class="split">
+          <div class="split-master split-stick">
+            <section class="panel">
+              <header class="panel-head">
+                <h2 class="panel-title">Projects</h2>
+                <span id="proj-list-meta" class="panel-meta"></span>
+              </header>
+              <div class="panel-body">
+                <div id="proj-list" class="stack proj-list"></div>
+              </div>
+            </section>
+          </div>
+          <div id="proj-detail" class="split-detail"></div>
+        </div>
+      </div>
+
+      <!-- ── SPECS ───────────────────────────────────────────────────────── —
+           The review surface. Master-detail: what JARVIS has written down on
+           the left, the numbered document on the right. Nothing here is an
+           input: the numbers beside the sections ARE the input, spoken. -->
+      <div id="specs-view" class="view" hidden>
+        <div id="specs-banner" class="empty" hidden></div>
+        <div id="specs-unavailable" class="empty" hidden>
+          The review surface isn't available — the server didn't answer
+          /api/specs.
+        </div>
+
+        <div id="specs-split" class="split">
+          <div class="split-master">
+            <section id="specs-projects-section" class="panel">
+              <header class="panel-head">
+                <h2 class="panel-title">Under Review</h2>
+                <span id="specs-projects-meta" class="panel-meta"></span>
+              </header>
+              <div class="panel-body">
+                <div id="specs-projects" class="stack"></div>
+              </div>
+            </section>
+
+            <section id="specs-docs-section" class="panel" hidden>
+              <header class="panel-head">
+                <h2 class="panel-title">Documents</h2>
+                <span id="specs-docs-meta" class="panel-meta"></span>
+              </header>
+              <div class="panel-body">
+                <div id="specs-docs" class="stack"></div>
+              </div>
+            </section>
+          </div>
+
+          <div class="split-detail split-stick">
+            <section id="specs-detail" class="panel panel--flush">
+              <header class="panel-head">
+                <h2 id="specs-doc-title" class="panel-title">Document</h2>
+                <span id="specs-doc-meta" class="panel-meta"></span>
+              </header>
+              <div id="specs-doc-body" class="panel-body specs-doc"></div>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── USAGE ───────────────────────────────────────────────────────── —
+           What the subscription has left, and who spent it. Every panel is
+           built in usage.ts: three independent sources feed this view and
+           each has to be able to say, on its own, that it knows nothing. -->
+      <div id="usage-view" class="view" hidden></div>
+    </main>
+
+    <aside id="detail" class="pane brackets" hidden></aside>
+    <aside id="memory-detail" class="pane brackets" hidden></aside>
+    <div id="connection-banner" class="banner tone-bad" hidden></div>
+
+    <script type="module" src="/src/dashboard/main.ts"></script>
+  </body>
+</html>

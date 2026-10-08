@@ -1,0 +1,3229 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JARVIS · Design Reference</title>
+
+    <!-- The real stylesheet, loaded relatively so this page can be opened
+         straight off disk with no server and can never drift from what
+         ships. Everything below is hand-written markup with fake data. -->
+    <link rel="stylesheet" href="./src/dashboard/style.css" />
+
+    <style>
+      /* Preview-only chrome. Nothing here ships. */
+      .pv-section { max-width: var(--shell-max); margin: 0 auto; padding: var(--sp-7) var(--sp-5) 0; }
+      .pv-head { display: flex; align-items: baseline; gap: var(--sp-3); margin-bottom: var(--sp-2); }
+      .pv-num {
+        font-size: var(--fs-micro); letter-spacing: var(--ls-label);
+        color: var(--accent); font-variant-numeric: tabular-nums;
+      }
+      .pv-title {
+        font-size: var(--fs-lg); font-weight: 600;
+        letter-spacing: var(--ls-wide); color: var(--text);
+      }
+      .pv-note {
+        max-width: 62ch; margin-bottom: var(--sp-4);
+        font-size: var(--fs-base); color: var(--text-dim);
+      }
+      .pv-grid { display: flex; flex-wrap: wrap; gap: var(--sp-5); align-items: flex-start; }
+      .pv-cell { display: flex; flex-direction: column; gap: var(--sp-2); }
+      .pv-cap {
+        font-size: var(--fs-micro); letter-spacing: var(--ls-label);
+        text-transform: uppercase; color: var(--text-faint);
+      }
+      .pv-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--sp-4); }
+      .pv-pane {
+        /* .pane is position:fixed in the app; unpin it so it can be judged
+           inline here, with everything else about it identical. */
+        position: static; width: 100%; max-width: 620px;
+        border: var(--stroke) solid var(--edge-strong);
+      }
+      /* The Sessions detail is a ~380px aside in the real grid;
+         pin the standalone examples to that width so they are
+         judged at the size they actually ship at. */
+      .pv-aside { width: 380px; max-width: 100%; }
+      .pv-stack { display: flex; flex-direction: column; gap: var(--sp-6); }
+      /* The cluster is right-aligned in the real masthead; unpin it so the
+         states can be compared against each other on the left edge. */
+      .pv-stats .shell-stats { margin-left: 0; }
+      .pv-foot {
+        max-width: var(--shell-max); margin: var(--sp-8) auto 0;
+        padding: var(--sp-5); font-size: var(--fs-sm); color: var(--text-faint);
+        border-top: var(--stroke) solid var(--edge);
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- ═══ MASTHEAD ═══════════════════════════════════════════════════════ -->
+    <header class="shell-head">
+      <div class="shell-head-top">
+        <div class="brand">
+          <span class="brand-mark">JARVIS</span>
+          <span class="brand-sub">Design Reference</span>
+        </div>
+        <div class="link-state tone-ok">
+          <span class="dot dot--done tone-ok" aria-hidden="true"></span>
+          <span>Link OK</span>
+        </div>
+        <div class="shell-stats">
+                <section class="stat-zone">
+                  <div class="stat-zone-head">
+                    <span class="stat-zone-title">Subscription</span>
+                    <span class="stat-zone-note">measured 3m ago</span>
+                  </div>
+                  <div class="usage-gauges">
+                    <div class="usage-gauge">
+                      <div class="bar tone-accent" role="progressbar" aria-valuenow="62"
+                           aria-valuemin="0" aria-valuemax="100">
+                        <div class="bar-head">
+                          <span class="bar-label">5-hour session</span>
+                          <span class="bar-value">62%</span>
+                        </div>
+                        <div class="bar-track"><div class="bar-fill" style="--pct: 62%"></div></div>
+                      </div>
+                      <div class="usage-when">resets 4:20pm</div>
+                    </div>
+                    <div class="usage-gauge">
+                      <div class="bar tone-warn" role="progressbar" aria-valuenow="84"
+                           aria-valuemin="0" aria-valuemax="100">
+                        <div class="bar-head">
+                          <span class="bar-label">7-day week</span>
+                          <span class="bar-value">84%</span>
+                        </div>
+                        <div class="bar-track"><div class="bar-fill" style="--pct: 84%"></div></div>
+                      </div>
+                      <div class="usage-when">resets Thu 9:00am</div>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="stat-zone">
+                  <div class="stat-zone-head">
+                    <span class="stat-zone-title">Today</span>
+                    <div class="stat-now tone-accent">
+                      <span class="dot dot--live tone-accent" aria-hidden="true"></span>
+                      <span>2 running</span>
+                    </div>
+                    <span class="pill tone-bad">2 need you</span>
+                  </div>
+                  <div class="stat-figures">
+                    <div class="readout readout--sm">
+                      <div class="readout-value">24</div>
+                      <div class="readout-label">Runs</div>
+                    </div>
+                    <div class="readout readout--sm">
+                      <div class="readout-value">19</div>
+                      <div class="readout-label">Succeeded</div>
+                    </div>
+                    <div class="readout readout--sm tone-bad">
+                      <div class="readout-value">2</div>
+                      <div class="readout-label">Failed</div>
+                    </div>
+                    <div class="readout readout--sm">
+                      <div class="readout-value">812k</div>
+                      <div class="readout-label">Tokens</div>
+                    </div>
+                  </div>
+                </section>
+              </div>
+      </div>
+
+      <!-- Six tabs: the three that exist plus the three that land next, to
+           show the strip holds without redesign. Indices are a CSS counter. -->
+      <nav class="tabs shell-tabs" role="tablist">
+        <button class="tab active" role="tab" aria-selected="true">Runs</button>
+        <button class="tab" role="tab" aria-selected="false">
+          Sessions <span class="tab-badge">2</span>
+        </button>
+        <button class="tab" role="tab" aria-selected="false">Memory</button>
+        <button class="tab" role="tab" aria-selected="false">Specs</button>
+        <button class="tab" role="tab" aria-selected="false">Projects</button>
+        <button class="tab" role="tab" aria-selected="false">Usage</button>
+      </nav>
+    </header>
+
+    <!-- ═══ 01 · THE MASTHEAD READOUT ═══ -->
+    <section class="pv-section">
+      <div class="pv-head">
+        <span class="pv-num">01</span>
+        <h2 class="pv-title">The masthead readout</h2>
+      </div>
+      <p class="pv-note">
+        JARVIS runs on your Claude subscription, so the number that matters is
+        how much of the five-hour and seven-day windows is gone — not a dollar
+        figure for API calls nobody made. The gauges are the hero; what is
+        running now and what ran today sit beside them.
+      </p>
+      <p class="pv-note">
+        The reading only exists once the brain has taken a turn, so the cluster
+        always says where its numbers came from and when. It never draws a
+        number it does not have: an unmeasured window is hatched and says so,
+        because an empty gauge and a 0% gauge are the same picture and one of
+        them is a lie.
+      </p>
+
+      <div class="panel">
+        <div class="panel-body pv-stack">
+          <div class="pv-cell pv-stats">
+            <div class="shell-stats">
+                    <section class="stat-zone">
+                      <div class="stat-zone-head">
+                        <span class="stat-zone-title">Subscription</span>
+                        <span class="stat-zone-note">measured 3m ago</span>
+                      </div>
+                      <div class="usage-gauges">
+                        <div class="usage-gauge">
+                          <div class="bar tone-accent" role="progressbar" aria-valuenow="62"
+                               aria-valuemin="0" aria-valuemax="100">
+                            <div class="bar-head">
+                              <span class="bar-label">5-hour session</span>
+                              <span class="bar-value">62%</span>
+                            </div>
+                            <div class="bar-track"><div class="bar-fill" style="--pct: 62%"></div></div>
+                          </div>
+                          <div class="usage-when">resets 4:20pm</div>
+                        </div>
+                        <div class="usage-gauge">
+                          <div class="bar tone-warn" role="progressbar" aria-valuenow="84"
+                               aria-valuemin="0" aria-valuemax="100">
+                            <div class="bar-head">
+                              <span class="bar-label">7-day week</span>
+                              <span class="bar-value">84%</span>
+                            </div>
+                            <div class="bar-track"><div class="bar-fill" style="--pct: 84%"></div></div>
+                          </div>
+                          <div class="usage-when">resets Thu 9:00am</div>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section class="stat-zone">
+                      <div class="stat-zone-head">
+                        <span class="stat-zone-title">Today</span>
+                        <div class="stat-now tone-accent">
+                          <span class="dot dot--live tone-accent" aria-hidden="true"></span>
+                          <span>2 running</span>
+                        </div>
+                        <span class="pill tone-bad">2 need you</span>
+                      </div>
+                      <div class="stat-figures">
+                        <div class="readout readout--sm">
+                          <div class="readout-value">24</div>
+                          <div class="readout-label">Runs</div>
+                        </div>
+                        <div class="readout readout--sm">
+                          <div class="readout-value">19</div>
+                          <div class="readout-label">Succeeded</div>
+                        </div>
+                        <div class="readout readout--sm tone-bad">
+                          <div class="readout-value">2</div>
+                          <div class="readout-label">Failed</div>
+                        </div>
+                        <div class="readout readout--sm">
+                          <div class="readout-value">812k</div>
+                          <div class="readout-label">Tokens</div>
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+            <span class="pv-cap">current · a reading from three minutes ago</span>
+          </div>
+
+          <div class="pv-cell pv-stats">
+            <div class="shell-stats">
+                    <section class="stat-zone">
+                      <div class="stat-zone-head">
+                        <span class="stat-zone-title">Subscription</span>
+                        <span class="stat-zone-note">measured just now</span>
+                      </div>
+                      <div class="usage-gauges">
+                        <div class="usage-gauge">
+                          <div class="bar tone-warn" role="progressbar" aria-valuenow="78"
+                               aria-valuemin="0" aria-valuemax="100">
+                            <div class="bar-head">
+                              <span class="bar-label">5-hour session</span>
+                              <span class="bar-value">78%</span>
+                            </div>
+                            <div class="bar-track"><div class="bar-fill" style="--pct: 78%"></div></div>
+                          </div>
+                          <div class="usage-when">resets 6:05pm</div>
+                        </div>
+                        <div class="usage-gauge">
+                          <div class="bar tone-bad" role="progressbar" aria-valuenow="96"
+                               aria-valuemin="0" aria-valuemax="100">
+                            <div class="bar-head">
+                              <span class="bar-label">7-day week</span>
+                              <span class="bar-value">96%</span>
+                            </div>
+                            <div class="bar-track"><div class="bar-fill" style="--pct: 96%"></div></div>
+                          </div>
+                          <div class="usage-when">resets Thu 9:00am</div>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section class="stat-zone">
+                      <div class="stat-zone-head">
+                        <span class="stat-zone-title">Today</span>
+                        <div class="stat-now tone-accent">
+                          <span class="dot dot--live tone-accent" aria-hidden="true"></span>
+                          <span>1 running</span>
+                        </div>
+                      </div>
+                      <div class="stat-figures">
+                        <div class="readout readout--sm">
+                          <div class="readout-value">41</div>
+                          <div class="readout-label">Runs</div>
+                        </div>
+                        <div class="readout readout--sm">
+                          <div class="readout-value">36</div>
+                          <div class="readout-label">Succeeded</div>
+                        </div>
+                        <div class="readout readout--sm tone-dim">
+                          <div class="readout-value">0</div>
+                          <div class="readout-label">Failed</div>
+                        </div>
+                        <div class="readout readout--sm">
+                          <div class="readout-value">2.4M</div>
+                          <div class="readout-label">Tokens</div>
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+            <span class="pv-cap">near the limit · warn at 75%, bad at 90%</span>
+          </div>
+
+          <div class="pv-cell pv-stats">
+            <div class="shell-stats">
+                    <section class="stat-zone">
+                      <div class="stat-zone-head">
+                        <span class="stat-zone-title">Subscription</span>
+                        <span class="pill tone-warn">stale</span>
+                        <span class="stat-zone-note">last measured 4h ago</span>
+                      </div>
+                      <div class="usage-gauges">
+                        <div class="usage-gauge">
+                          <div class="bar tone-accent bar--stale" role="progressbar" aria-valuenow="62"
+                               aria-valuemin="0" aria-valuemax="100">
+                            <div class="bar-head">
+                              <span class="bar-label">5-hour session</span>
+                              <span class="bar-value">62%</span>
+                            </div>
+                            <div class="bar-track"><div class="bar-fill" style="--pct: 62%"></div></div>
+                          </div>
+                          <div class="usage-when">resets 4:20pm · 4h ago</div>
+                        </div>
+                        <div class="usage-gauge">
+                          <div class="bar tone-warn bar--stale" role="progressbar" aria-valuenow="84"
+                               aria-valuemin="0" aria-valuemax="100">
+                            <div class="bar-head">
+                              <span class="bar-label">7-day week</span>
+                              <span class="bar-value">84%</span>
+                            </div>
+                            <div class="bar-track"><div class="bar-fill" style="--pct: 84%"></div></div>
+                          </div>
+                          <div class="usage-when">resets Thu 9:00am · 4h ago</div>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section class="stat-zone">
+                      <div class="stat-zone-head">
+                        <span class="stat-zone-title">Today</span>
+                        <div class="stat-now tone-idle">
+                          <span class="dot dot--void tone-idle" aria-hidden="true"></span>
+                          <span>all quiet</span>
+                        </div>
+                      </div>
+                      <div class="stat-figures">
+                        <div class="readout readout--sm">
+                          <div class="readout-value">6</div>
+                          <div class="readout-label">Runs</div>
+                        </div>
+                        <div class="readout readout--sm">
+                          <div class="readout-value">6</div>
+                          <div class="readout-label">Succeeded</div>
+                        </div>
+                        <div class="readout readout--sm tone-dim">
+                          <div class="readout-value">0</div>
+                          <div class="readout-label">Failed</div>
+                        </div>
+                        <div class="readout readout--sm">
+                          <div class="readout-value">98k</div>
+                          <div class="readout-label">Tokens</div>
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+            <span class="pv-cap">stale · the numbers stand, the light behind them does not</span>
+          </div>
+
+          <div class="pv-cell pv-stats">
+            <div class="shell-stats">
+                    <section class="stat-zone">
+                      <div class="stat-zone-head">
+                        <span class="stat-zone-title">Subscription</span>
+                        <span class="pill tone-warn">no reading</span>
+                        <span class="stat-zone-note">nothing measured since JARVIS started</span>
+                      </div>
+                      <div class="usage-gauges">
+                        <div class="usage-gauge">
+                          <div class="bar tone-dim bar--unknown" role="progressbar" aria-valuetext="not measured"
+                               aria-valuemin="0" aria-valuemax="100">
+                            <div class="bar-head">
+                              <span class="bar-label">5-hour session</span>
+                              <span class="bar-value">not measured</span>
+                            </div>
+                            <div class="bar-track"><div class="bar-fill"></div></div>
+                          </div>
+                          <div class="usage-when">no reading yet</div>
+                        </div>
+                        <div class="usage-gauge">
+                          <div class="bar tone-dim bar--unknown" role="progressbar" aria-valuetext="not measured"
+                               aria-valuemin="0" aria-valuemax="100">
+                            <div class="bar-head">
+                              <span class="bar-label">7-day week</span>
+                              <span class="bar-value">not measured</span>
+                            </div>
+                            <div class="bar-track"><div class="bar-fill"></div></div>
+                          </div>
+                          <div class="usage-when">no reading yet</div>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section class="stat-zone">
+                      <div class="stat-zone-head">
+                        <span class="stat-zone-title">Today</span>
+                        <div class="stat-now tone-idle">
+                          <span class="dot dot--void tone-idle" aria-hidden="true"></span>
+                          <span>no runs yet</span>
+                        </div>
+                      </div>
+                      <div class="stat-figures">
+                        <div class="readout readout--sm">
+                          <div class="readout-value">0</div>
+                          <div class="readout-label">Runs</div>
+                        </div>
+                        <div class="readout readout--sm">
+                          <div class="readout-value">0</div>
+                          <div class="readout-label">Succeeded</div>
+                        </div>
+                        <div class="readout readout--sm tone-dim">
+                          <div class="readout-value">0</div>
+                          <div class="readout-label">Failed</div>
+                        </div>
+                        <div class="readout readout--sm">
+                          <div class="readout-value">0</div>
+                          <div class="readout-label">Tokens</div>
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+            <span class="pv-cap">cold start · the brain has not taken a turn, so nothing is known</span>
+          </div>
+
+          <div class="pv-cell pv-stats">
+            <div class="shell-stats">
+                    <section class="stat-zone">
+                      <div class="stat-zone-head">
+                        <span class="stat-zone-title">Subscription</span>
+                        <span class="stat-zone-note">measured 2h ago</span>
+                      </div>
+                      <div class="usage-gauges">
+                        <div class="usage-gauge">
+                          <div class="bar tone-dim bar--unknown" role="progressbar" aria-valuetext="reset since"
+                               aria-valuemin="0" aria-valuemax="100">
+                            <div class="bar-head">
+                              <span class="bar-label">5-hour session</span>
+                              <span class="bar-value">reset since</span>
+                            </div>
+                            <div class="bar-track"><div class="bar-fill"></div></div>
+                          </div>
+                          <div class="usage-when">reset 1:00pm</div>
+                        </div>
+                        <div class="usage-gauge">
+                          <div class="bar tone-warn" role="progressbar" aria-valuenow="84"
+                               aria-valuemin="0" aria-valuemax="100">
+                            <div class="bar-head">
+                              <span class="bar-label">7-day week</span>
+                              <span class="bar-value">84%</span>
+                            </div>
+                            <div class="bar-track"><div class="bar-fill" style="--pct: 84%"></div></div>
+                          </div>
+                          <div class="usage-when">resets Thu 9:00am</div>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section class="stat-zone">
+                      <div class="stat-zone-head">
+                        <span class="stat-zone-title">Today</span>
+                        <div class="stat-now tone-idle">
+                          <span class="dot dot--void tone-idle" aria-hidden="true"></span>
+                          <span>all quiet</span>
+                        </div>
+                      </div>
+                      <div class="stat-figures">
+                        <div class="readout readout--sm">
+                          <div class="readout-value">12</div>
+                          <div class="readout-label">Runs</div>
+                        </div>
+                        <div class="readout readout--sm">
+                          <div class="readout-value">11</div>
+                          <div class="readout-label">Succeeded</div>
+                        </div>
+                        <div class="readout readout--sm tone-bad">
+                          <div class="readout-value">1</div>
+                          <div class="readout-label">Failed</div>
+                        </div>
+                        <div class="readout readout--sm">
+                          <div class="readout-value">330k</div>
+                          <div class="readout-label">Tokens</div>
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+            <span class="pv-cap">rolled over · the window we measured no longer exists</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 02 · THE RUNS VIEW, COMPOSED ═══════════════════════════════════ -->
+    <section class="pv-section">
+      <div class="pv-head">
+        <span class="pv-num">02</span>
+        <h2 class="pv-title">Runs, as it ships</h2>
+      </div>
+      <p class="pv-note">
+        Failures are lifted out of history into their own panel so a bad build
+        is the first thing on the page, not the ninth row down. Every run also
+        shows its prompt — the only thing that tells two runs of one project
+        apart.
+      </p>
+
+      <div class="view">
+        <section class="panel panel--alert tone-bad">
+          <header class="panel-head">
+            <h2 class="panel-title">Needs Attention</h2>
+            <span class="panel-meta">2</span>
+          </header>
+          <div class="panel-body">
+            <div class="stack">
+              <div class="row row--action row--attn tone-bad">
+                <span class="row-lead"><span class="dot dot--fault tone-bad"></span></span>
+                <span class="row-main">
+                  <span class="row-title">jarvis</span>
+                  <span class="row-sub">migrate run_store to WAL and add the index on created_at</span>
+                </span>
+                <span class="row-trail">
+                  <span class="pill tone-bad run-status">failed</span>
+                  <span class="row-meta run-dur">3m 04s</span>
+                  <span class="row-meta run-tokens">18.4k tok</span>
+                  <span class="row-meta run-when">14:02</span>
+                </span>
+                <div class="row-note">└ exit 1 · sqlite3.OperationalError: database is locked</div>
+              </div>
+              <div class="row row--action row--attn tone-bad">
+                <span class="row-lead"><span class="dot dot--fault tone-bad"></span></span>
+                <span class="row-main">
+                  <span class="row-title">notes-app</span>
+                  <span class="row-sub">rewrite the notifier fan-out so it stops blocking the event loop</span>
+                </span>
+                <span class="row-trail">
+                  <span class="pill tone-bad run-status">timed out</span>
+                  <span class="row-meta run-dur">30m 00s</span>
+                  <span class="row-meta run-tokens">126k tok</span>
+                  <span class="row-meta run-when">11:47</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <header class="panel-head">
+            <h2 class="panel-title">Active</h2>
+            <span class="panel-meta">2</span>
+          </header>
+          <div class="panel-body">
+            <div class="stack">
+              <div class="row row--action tone-accent">
+                <span class="row-lead"><span class="dot dot--live tone-accent"></span></span>
+                <span class="row-main">
+                  <span class="row-title">jarvis</span>
+                  <span class="row-sub">build the holographic dashboard shell and port the three views</span>
+                </span>
+                <span class="row-trail">
+                  <span class="pill tone-accent run-status">running</span>
+                  <span class="row-meta run-dur">4m 12s</span>
+                  <span class="row-meta run-tokens">44.0k tok</span>
+                  <span class="row-meta run-when">15:31</span>
+                </span>
+                <div class="row-note">└ Edit: frontend/src/dashboard/theme/primitives.css</div>
+              </div>
+              <div class="row row--action tone-warn">
+                <span class="row-lead"><span class="dot dot--pending tone-warn"></span></span>
+                <span class="row-main">
+                  <span class="row-title">stormlight</span>
+                  <span class="row-sub">add the usage view on top of the new primitives</span>
+                </span>
+                <span class="row-trail">
+                  <span class="pill tone-warn run-status">queued</span>
+                  <span class="row-meta run-dur">—</span>
+                  <span class="row-meta run-tokens">—</span>
+                  <span class="row-meta run-when">15:33</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <header class="panel-head">
+            <h2 class="panel-title">History</h2>
+            <span class="panel-meta">21</span>
+          </header>
+          <div class="panel-body">
+            <div class="stack">
+              <div class="row row--action tone-ok">
+                <span class="row-lead"><span class="dot dot--done tone-ok"></span></span>
+                <span class="row-main">
+                  <span class="row-title">jarvis</span>
+                  <span class="row-sub">add tabular numerals to every changing value in the stat bar</span>
+                </span>
+                <span class="row-trail">
+                  <span class="pill tone-ok run-status">succeeded</span>
+                  <span class="row-meta run-dur">1m 46s</span>
+                  <span class="row-meta run-tokens">9.8k tok</span>
+                  <span class="row-meta run-when">13:12</span>
+                </span>
+              </div>
+              <div class="row row--action tone-ok">
+                <span class="row-lead"><span class="dot dot--done tone-ok"></span></span>
+                <span class="row-main">
+                  <span class="row-title">jarvis</span>
+                  <span class="row-sub">teach the brain to name the day in a spoken reset time</span>
+                </span>
+                <span class="row-trail">
+                  <span class="pill tone-ok run-status">succeeded</span>
+                  <span class="row-meta run-dur">6m 20s</span>
+                  <span class="row-meta run-tokens">61.2k tok</span>
+                  <span class="row-meta run-when">12:04</span>
+                </span>
+              </div>
+              <div class="row row--action tone-idle">
+                <span class="row-lead"><span class="dot dot--void tone-idle"></span></span>
+                <span class="row-main">
+                  <span class="row-title">notes-cli</span>
+                  <span class="row-sub">port the AppleScript bridge to the new actions module</span>
+                </span>
+                <span class="row-trail">
+                  <span class="pill tone-idle run-status">cancelled</span>
+                  <span class="row-meta run-dur">0m 41s</span>
+                  <span class="row-meta run-tokens">2.1k tok</span>
+                  <span class="row-meta run-when">10:55</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- ═══ 03 · PANEL ═════════════════════════════════════════════════════ -->
+    <section class="pv-section">
+      <div class="pv-head">
+        <span class="pv-num">03</span>
+        <h2 class="pv-title">Panel</h2>
+      </div>
+      <p class="pv-note">
+        The frame everything lives in: hairline border, four corner brackets,
+        a tick rule between the title and its count. <code>panel--alert</code>
+        takes the tone of whatever is wrong. <code>panel--quiet</code> drops
+        the frame for sub-grouping inside another panel.
+      </p>
+      <div class="pv-cols">
+        <section class="panel">
+          <header class="panel-head">
+            <h2 class="panel-title">Standard</h2>
+            <span class="panel-meta">12</span>
+          </header>
+          <div class="panel-body">Body content sits here.</div>
+        </section>
+
+        <section class="panel panel--alert tone-bad">
+          <header class="panel-head">
+            <h2 class="panel-title">Alert</h2>
+            <span class="panel-meta">2</span>
+          </header>
+          <div class="panel-body">Something in here wants the user.</div>
+        </section>
+
+        <section class="panel panel--alert tone-warn">
+          <header class="panel-head">
+            <h2 class="panel-title">Alert · Warn</h2>
+            <span class="panel-meta">88%</span>
+          </header>
+          <div class="panel-body">Approaching a limit, not past it.</div>
+        </section>
+      </div>
+    </section>
+
+    <!-- ═══ 04 · READOUT ═══════════════════════════════════════════════════ -->
+    <section class="pv-section">
+      <div class="pv-head">
+        <span class="pv-num">04</span>
+        <h2 class="pv-title">Readout</h2>
+      </div>
+      <p class="pv-note">
+        One labelled number. Tabular figures, so a value ticking from 9 to 10
+        moves nothing around it. Tone is opt-in — most numbers carry no state,
+        and a wall of coloured numbers means nothing.
+      </p>
+      <div class="panel">
+        <div class="panel-body pv-grid">
+          <div class="pv-cell">
+            <div class="readout readout--lg readout--start">
+              <div class="readout-value">812k</div>
+              <div class="readout-label">Tokens Today</div>
+            </div>
+            <span class="pv-cap">readout--lg</span>
+          </div>
+          <div class="pv-cell">
+            <div class="readout readout--start">
+              <div class="readout-value">24</div>
+              <div class="readout-label">Runs</div>
+            </div>
+            <span class="pv-cap">default</span>
+          </div>
+          <div class="pv-cell">
+            <div class="readout readout--start tone-ok">
+              <div class="readout-value">19</div>
+              <div class="readout-label">Succeeded</div>
+            </div>
+            <span class="pv-cap">tone-ok</span>
+          </div>
+          <div class="pv-cell">
+            <div class="readout readout--start tone-bad">
+              <div class="readout-value">2</div>
+              <div class="readout-label">Failed</div>
+            </div>
+            <span class="pv-cap">tone-bad</span>
+          </div>
+          <div class="pv-cell">
+            <div class="readout readout--start">
+              <div class="readout-value">14<span class="readout-unit">m 22s</span></div>
+              <div class="readout-label">Longest Run</div>
+            </div>
+            <span class="pv-cap">with unit</span>
+          </div>
+          <div class="pv-cell">
+            <div class="readout readout--sm readout--start tone-dim">
+              <div class="readout-value">1.2M</div>
+              <div class="readout-label">Cache Reads</div>
+            </div>
+            <span class="pv-cap">readout--sm</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 05 · BAR ═══════════════════════════════════════════════════════ -->
+    <section class="pv-section">
+      <div class="pv-head">
+        <span class="pv-num">05</span>
+        <h2 class="pv-title">Bar</h2>
+      </div>
+      <p class="pv-note">
+        A gauge with a number beside it, ticked into ten segments so a glance
+        gives you a value and not just a mood. Width transitions over 620ms
+        when it changes; the indeterminate variant sweeps only while a run is
+        actually working.
+      </p>
+      <div class="panel">
+        <div class="panel-body pv-cols">
+          <div class="pv-cell">
+            <div class="bar tone-accent" role="progressbar" aria-valuenow="71" aria-valuemin="0" aria-valuemax="100">
+              <div class="bar-head">
+                <span class="bar-label">Build · jarvis</span>
+                <span class="bar-value">71%</span>
+              </div>
+              <div class="bar-track"><div class="bar-fill" style="--pct: 71%"></div></div>
+            </div>
+            <span class="pv-cap">tone-accent · in progress</span>
+          </div>
+
+          <div class="pv-cell">
+            <div class="bar tone-ok" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+              <div class="bar-head">
+                <span class="bar-label">Suite · 1165 tests</span>
+                <span class="bar-value">100%</span>
+              </div>
+              <div class="bar-track"><div class="bar-fill" style="--pct: 100%"></div></div>
+            </div>
+            <span class="pv-cap">tone-ok · complete</span>
+          </div>
+
+          <div class="pv-cell">
+            <div class="bar tone-warn" role="progressbar" aria-valuenow="88" aria-valuemin="0" aria-valuemax="100">
+              <div class="bar-head">
+                <span class="bar-label">Context Window</span>
+                <span class="bar-value">88%</span>
+              </div>
+              <div class="bar-track"><div class="bar-fill" style="--pct: 88%"></div></div>
+            </div>
+            <span class="pv-cap">tone-warn · nearing a limit</span>
+          </div>
+
+          <div class="pv-cell">
+            <div class="bar tone-bad" role="progressbar" aria-valuenow="96" aria-valuemin="0" aria-valuemax="100">
+              <div class="bar-head">
+                <span class="bar-label">7-day week</span>
+                <span class="bar-value">96%</span>
+              </div>
+              <div class="bar-track"><div class="bar-fill" style="--pct: 96%"></div></div>
+            </div>
+            <span class="pv-cap">tone-bad · over the line</span>
+          </div>
+
+          <div class="pv-cell">
+            <div class="bar bar--unknown tone-dim" role="progressbar"
+                 aria-valuetext="not measured" aria-valuemin="0" aria-valuemax="100">
+              <div class="bar-head">
+                <span class="bar-label">7-day week</span>
+                <span class="bar-value">not measured</span>
+              </div>
+              <div class="bar-track"><div class="bar-fill"></div></div>
+            </div>
+            <span class="pv-cap">bar--unknown · nobody has looked</span>
+          </div>
+
+          <div class="pv-cell">
+            <div class="bar bar--stale tone-warn" role="progressbar" aria-valuenow="84" aria-valuemin="0" aria-valuemax="100">
+              <div class="bar-head">
+                <span class="bar-label">7-day week</span>
+                <span class="bar-value">84%</span>
+              </div>
+              <div class="bar-track"><div class="bar-fill" style="--pct: 84%"></div></div>
+            </div>
+            <span class="pv-cap">bar--stale · true four hours ago</span>
+          </div>
+
+          <div class="pv-cell">
+            <div class="bar bar--indeterminate tone-accent" role="progressbar">
+              <div class="bar-head">
+                <span class="bar-label">Working</span>
+                <span class="bar-value">—</span>
+              </div>
+              <div class="bar-track"><div class="bar-fill"></div></div>
+            </div>
+            <span class="pv-cap">bar--indeterminate</span>
+          </div>
+
+          <div class="pv-cell">
+            <div class="bar bar--slim tone-idle" role="progressbar" aria-valuenow="34" aria-valuemin="0" aria-valuemax="100">
+              <div class="bar-head"><span class="bar-label">Slim</span><span class="bar-value">34%</span></div>
+              <div class="bar-track"><div class="bar-fill" style="--pct: 34%"></div></div>
+            </div>
+            <span class="pv-cap">bar--slim · inline in a row</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 06 · DOT & PILL ════════════════════════════════════════════════ -->
+    <section class="pv-section">
+      <div class="pv-head">
+        <span class="pv-num">06</span>
+        <h2 class="pv-title">Status dot &amp; pill</h2>
+      </div>
+      <p class="pv-note">
+        Five shapes across thirteen states, so the six run states and the seven
+        session states never rely on hue alone: filled circle, hollow circle,
+        filled diamond, hollow diamond, and the one that breathes — which means
+        exactly "this is doing something right now" and nothing else.
+      </p>
+      <div class="panel">
+        <div class="panel-body pv-grid">
+          <div class="pv-cell">
+            <div class="pv-grid" style="gap: var(--sp-2); align-items: center;">
+              <span class="dot dot--live tone-accent"></span>
+              <span class="pill tone-accent">running</span>
+            </div>
+            <span class="pv-cap">dot--live</span>
+          </div>
+          <div class="pv-cell">
+            <div class="pv-grid" style="gap: var(--sp-2); align-items: center;">
+              <span class="dot dot--pending tone-warn"></span>
+              <span class="pill tone-warn">queued</span>
+            </div>
+            <span class="pv-cap">dot--pending</span>
+          </div>
+          <div class="pv-cell">
+            <div class="pv-grid" style="gap: var(--sp-2); align-items: center;">
+              <span class="dot dot--done tone-ok"></span>
+              <span class="pill tone-ok">succeeded</span>
+            </div>
+            <span class="pv-cap">dot--done</span>
+          </div>
+          <div class="pv-cell">
+            <div class="pv-grid" style="gap: var(--sp-2); align-items: center;">
+              <span class="dot dot--fault tone-bad"></span>
+              <span class="pill tone-bad">failed</span>
+            </div>
+            <span class="pv-cap">dot--fault</span>
+          </div>
+          <div class="pv-cell">
+            <div class="pv-grid" style="gap: var(--sp-2); align-items: center;">
+              <span class="dot dot--fault tone-bad"></span>
+              <span class="pill tone-bad">timed out</span>
+            </div>
+            <span class="pv-cap">dot--fault</span>
+          </div>
+          <div class="pv-cell">
+            <div class="pv-grid" style="gap: var(--sp-2); align-items: center;">
+              <span class="dot dot--void tone-idle"></span>
+              <span class="pill tone-idle">cancelled</span>
+            </div>
+            <span class="pv-cap">dot--void</span>
+          </div>
+          <div class="pv-cell">
+            <div class="pv-grid" style="gap: var(--sp-2); align-items: center;">
+              <span class="dot dot--fault tone-bad"></span>
+              <span class="pill tone-bad">needs you</span>
+            </div>
+            <span class="pv-cap">session</span>
+          </div>
+          <div class="pv-cell">
+            <div class="pv-grid" style="gap: var(--sp-2); align-items: center;">
+              <span class="dot dot--live tone-accent"></span>
+              <span class="pill tone-accent">working</span>
+            </div>
+            <span class="pv-cap">session</span>
+          </div>
+          <div class="pv-cell">
+            <div class="pv-grid" style="gap: var(--sp-2); align-items: center;">
+              <span class="dot dot--done tone-ok"></span>
+              <span class="pill tone-ok">idle</span>
+            </div>
+            <span class="pv-cap">session</span>
+          </div>
+          <div class="pv-cell">
+            <div class="pv-grid" style="gap: var(--sp-2); align-items: center;">
+              <span class="dot dot--pending tone-warn"></span>
+              <span class="pill tone-warn">shell</span>
+            </div>
+            <span class="pv-cap">session</span>
+          </div>
+          <div class="pv-cell">
+            <div class="pv-grid" style="gap: var(--sp-2); align-items: center;">
+              <span class="dot dot--pending tone-dim"></span>
+              <span class="pill tone-dim">fresh</span>
+            </div>
+            <span class="pv-cap">session</span>
+          </div>
+          <div class="pv-cell">
+            <div class="pv-grid" style="gap: var(--sp-2); align-items: center;">
+              <span class="dot dot--void tone-idle"></span>
+              <span class="pill tone-idle">gone</span>
+            </div>
+            <span class="pv-cap">session</span>
+          </div>
+          <div class="pv-cell">
+            <div class="pv-grid" style="gap: var(--sp-2); align-items: center;">
+              <span class="pill pill--ghost">no steer</span>
+              <span class="pill pill--solid tone-bad">2</span>
+            </div>
+            <span class="pv-cap">pill--ghost · pill--solid</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 07 · SESSIONS ══════════════════════════════════════════════════ -->
+    <section class="pv-section">
+      <div class="pv-head">
+        <span class="pv-num">07</span>
+        <h2 class="pv-title">Sessions</h2>
+      </div>
+      <p class="pv-note">
+        The one question this view exists to answer is <strong>“does this want
+        me, and why?”</strong> — so that is what the panel opens with, and
+        everything else on it is context for that one sentence. A blocked
+        session gets the flooded band and the CLI’s own reason, verbatim, in
+        the largest type on the panel. Every other state gets the same band,
+        quiet, saying in words that nothing is asked of you. If every state
+        shouted, none of them would.
+      </p>
+      <p class="pv-note">
+        <strong>Clicking never moves the list.</strong> Both columns are
+        always in the grid — the shared <code>.split</code> primitive that
+        Projects and Specs use — so selecting a session swaps the right-hand
+        column and nothing under the cursor shifts. Below 900px that column
+        becomes a right-hand sheet over a scrim; Escape, Close, the scrim and
+        clicking the open row again all put it away.
+      </p>
+      <p class="pv-note">
+        Every fragment below is the markup <code>sessions.ts</code> actually
+        emits, lifted out of a running page rather than hand-copied, so this
+        page cannot quietly drift from what ships.
+      </p>
+
+      <div class="pv-cell">
+        <span class="pv-cap">The view, with a blocked session open beside the list</span>
+        <div class="split split--aside">
+          <div class="split-master">
+            <section class="panel panel--alert tone-bad">
+              <header class="panel-head">
+                <h2 class="panel-title">Needs You</h2>
+                <span class="panel-meta">2</span>
+              </header>
+              <div class="panel-body">
+                <div class="stack">
+                  <div class="row row--action row--attn tone-bad sess-row" tabindex="0" role="button" aria-label="Halloran — needs you" data-session-id="s-need2">
+                    <span class="row-lead">
+                      <span class="dot dot--fault tone-bad" aria-hidden="true"></span>
+                    </span>
+                    <span class="row-main">
+                      <span class="row-title">Halloran</span>
+                      <span class="row-sub">notes-app</span>
+                    </span>
+                    <span class="row-trail">
+                      <span class="pill tone-bad">needs you</span>
+                      <span class="pill pill--ghost tone-warn">no steer</span>
+                      <span class="row-meta sess-when">3h ago</span>
+                    </span>
+                  </div>
+                  <div class="row row--action row--attn tone-bad sess-row is-open" tabindex="0" role="button" aria-label="Wexler — needs you" data-session-id="s-need" data-primary-reason="most recently active here">
+                    <span class="row-lead">
+                      <span class="dot dot--fault tone-bad" aria-hidden="true"></span>
+                    </span>
+                    <span class="row-main">
+                      <span class="row-title">Wexler</span>
+                      <span class="row-sub">jarvis</span>
+                    </span>
+                    <span class="row-trail">
+                      <span class="pill tone-bad">needs you</span>
+                      <span class="pill tone-accent">main</span>
+                      <span class="row-meta sess-when">51m ago</span>
+                    </span>
+                    <div class="row-body">
+                      <div class="session-reason">permission prompt</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section class="panel">
+              <header class="panel-head">
+                <h2 class="panel-title">Sessions by Project</h2>
+                <span class="panel-meta">8</span>
+              </header>
+              <div class="panel-body">
+                <div class="group">
+                  <div class="group-head">
+                    <span class="group-name">jarvis</span>
+                    <span class="group-count">5</span>
+                  </div>
+                  <div class="stack">
+                    <div class="row row--action row--attn tone-bad sess-row is-open" tabindex="0" role="button" aria-label="Wexler — needs you" data-session-id="s-need" data-primary-reason="most recently active here">
+                      <span class="row-lead">
+                        <span class="dot dot--fault tone-bad" aria-hidden="true"></span>
+                      </span>
+                      <span class="row-main">
+                        <span class="row-title">Wexler</span>
+                        <span class="row-sub">Drop the legacy run_events.payload_json column</span>
+                      </span>
+                      <span class="row-trail">
+                        <span class="pill tone-bad">needs you</span>
+                        <span class="pill tone-accent">main</span>
+                        <span class="row-meta sess-when">51m ago</span>
+                      </span>
+                      <div class="row-body">
+                        <div class="session-reason">permission prompt</div>
+                      </div>
+                    </div>
+                    <div class="row row--action tone-accent sess-row" tabindex="0" role="button" aria-label="Ferrand — working" data-session-id="s-work" data-primary-reason="most recently active here">
+                      <span class="row-lead">
+                        <span class="dot dot--live tone-accent" aria-hidden="true"></span>
+                      </span>
+                      <span class="row-main">
+                        <span class="row-title">Ferrand</span>
+                        <span class="row-sub">Port the dashboard views onto the new primitives</span>
+                      </span>
+                      <span class="row-trail">
+                        <span class="pill tone-accent">working</span>
+                        <span class="pill tone-accent">main</span>
+                        <span class="pill tone-accent">2 agents</span>
+                        <span class="row-meta sess-when">2m ago</span>
+                      </span>
+                    </div>
+                    <div class="row row--action tone-warn sess-row" tabindex="0" role="button" aria-label="Prewitt — shell" data-session-id="s-shell">
+                      <span class="row-lead">
+                        <span class="dot dot--pending tone-warn" aria-hidden="true"></span>
+                      </span>
+                      <span class="row-main">
+                        <span class="row-title">Prewitt</span>
+                        <span class="row-sub">Chasing a flaky test</span>
+                      </span>
+                      <span class="row-trail">
+                        <span class="pill tone-warn">shell</span>
+                        <span class="row-meta sess-when">3h ago</span>
+                      </span>
+                    </div>
+                    <div class="row row--action tone-ok sess-row" tabindex="0" role="button" aria-label="Osgood — idle" data-session-id="s-idle">
+                      <span class="row-lead">
+                        <span class="dot dot--done tone-ok" aria-hidden="true"></span>
+                      </span>
+                      <span class="row-main">
+                        <span class="row-title">Osgood</span>
+                        <span class="row-sub">Run-store index migration</span>
+                      </span>
+                      <span class="row-trail">
+                        <span class="pill tone-ok">idle</span>
+                        <span class="row-meta sess-when">18m ago</span>
+                      </span>
+                    </div>
+                  </div>
+                  <details class="fresh-group">
+                    <summary>1 fresh (never prompted)</summary>
+                    <div class="stack">
+                      <div class="row row--action row--dim tone-dim sess-row" tabindex="0" role="button" aria-label="Ivers — fresh" data-session-id="s-fresh">
+                        <span class="row-lead">
+                          <span class="dot dot--pending tone-dim" aria-hidden="true"></span>
+                        </span>
+                        <span class="row-main">
+                          <span class="row-title">Ivers</span>
+                          <span class="row-sub" hidden=""></span>
+                        </span>
+                        <span class="row-trail">
+                          <span class="pill tone-dim">fresh</span>
+                          <span class="pill pill--ghost tone-warn">no steer</span>
+                          <span class="row-meta sess-when">4d ago</span>
+                        </span>
+                      </div>
+                    </div>
+                  </details>
+                </div>
+                <div class="group">
+                  <div class="group-head">
+                    <span class="group-name">notes-app</span>
+                    <span class="group-count">2</span>
+                  </div>
+                  <div class="stack">
+                    <div class="row row--action row--attn tone-bad sess-row" tabindex="0" role="button" aria-label="Halloran — needs you" data-session-id="s-need2">
+                      <span class="row-lead">
+                        <span class="dot dot--fault tone-bad" aria-hidden="true"></span>
+                      </span>
+                      <span class="row-main">
+                        <span class="row-title">Halloran</span>
+                        <span class="row-sub">Pick a store for the roster</span>
+                      </span>
+                      <span class="row-trail">
+                        <span class="pill tone-bad">needs you</span>
+                        <span class="pill pill--ghost tone-warn">no steer</span>
+                        <span class="row-meta sess-when">3h ago</span>
+                      </span>
+                    </div>
+                    <div class="row row--action tone-idle sess-row" tabindex="0" role="button" aria-label="Mallory — gone" data-session-id="s-gone">
+                      <span class="row-lead">
+                        <span class="dot dot--void tone-idle" aria-hidden="true"></span>
+                      </span>
+                      <span class="row-main">
+                        <span class="row-title">Mallory</span>
+                        <span class="row-sub" hidden=""></span>
+                      </span>
+                      <span class="row-trail">
+                        <span class="pill tone-idle">gone</span>
+                        <span class="pill pill--ghost tone-warn">no steer</span>
+                        <span class="row-meta sess-when">2d ago</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="group">
+                  <div class="group-head">
+                    <span class="group-name">chitauri</span>
+                    <span class="group-count">1</span>
+                  </div>
+                  <div class="stack">
+                    <div class="row row--action tone-idle sess-row" tabindex="0" role="button" aria-label="Truett — unknown" data-session-id="s-unk">
+                      <span class="row-lead">
+                        <span class="dot dot--void tone-idle" aria-hidden="true"></span>
+                      </span>
+                      <span class="row-main">
+                        <span class="row-title">Truett</span>
+                        <span class="row-sub" hidden=""></span>
+                      </span>
+                      <span class="row-trail">
+                        <span class="pill tone-idle">unknown</span>
+                        <span class="row-meta sess-when">no stamp</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+          <div class="split-detail">
+            <div class="sd">
+              <div class="sd-head">
+                <span class="dot dot--fault tone-bad" aria-hidden="true"></span>
+                <h2 class="sd-name">Wexler</h2>
+                <button class="btn--quiet" type="button" title="Close (Esc)">Close</button>
+                <div class="sd-where">
+                  <span>jarvis</span>
+                  <span class="pill tone-accent">main here</span>
+                  <span class="pill pill--ghost tone-idle">terminal</span>
+                </div>
+              </div>
+              <div class="callout callout--loud tone-bad">
+                <div class="callout-head">
+                  <span class="dot dot--fault tone-bad" aria-hidden="true"></span>
+                  <span class="callout-label">Waiting on you</span>
+                  <span class="callout-meta">waiting for 51m</span>
+                </div>
+                <p class="callout-body">permission prompt</p>
+                <div class="callout-foot">
+                  <span class="pill tone-bad">your keystroke</span>
+                  <span class="callout-note">JARVIS cannot answer this one — it wants a key pressed in that terminal.</span>
+                </div>
+              </div>
+              <section class="panel">
+                <header class="panel-head">
+                  <h2 class="panel-title">What It Is Doing</h2>
+                  <span class="panel-meta" hidden=""></span>
+                </header>
+                <div class="panel-body">
+                  <div class="sd-block">
+                    <span class="sd-label">Its own title for this</span>
+                    <div class="sd-quote is-title">Drop the legacy run_events.payload_json column</div>
+                  </div>
+                  <div class="sd-block">
+                    <span class="sd-label">You last asked</span>
+                    <div class="sd-quote">migrate run_events and drop the old column</div>
+                  </div>
+                  <div class="sd-block">
+                    <span class="sd-label">It last said</span>
+                    <div class="sd-quote">I need permission to run `sqlite3` against the live database before I can migrate run_events. Allow it?</div>
+                  </div>
+                  <div class="sd-block">
+                    <span class="sd-label">Last tools it reached for</span>
+                    <div class="sd-pills">
+                      <span class="pill pill--ghost tone-idle">Bash</span>
+                      <span class="pill pill--ghost tone-idle">Edit</span>
+                      <span class="pill pill--ghost tone-idle">Read</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+              <section class="panel">
+                <header class="panel-head">
+                  <h2 class="panel-title">Under It</h2>
+                  <span class="panel-meta">2</span>
+                </header>
+                <div class="panel-body">
+                  <div class="sd-block">
+                    <div class="sd-pills">
+                      <span class="pill tone-idle">0 active</span>
+                      <span class="pill pill--ghost tone-idle">2 dispatched</span>
+                    </div>
+                    <div class="sd-agent-note">"Active" means a transcript written in the last 90 seconds. It is a file age, not a live process — there is no process here to check.</div>
+                  </div>
+                  <div class="empty empty--sm">The scan found no agent transcripts to read.</div>
+                </div>
+              </section>
+              <section class="panel">
+                <header class="panel-head">
+                  <h2 class="panel-title">The Session</h2>
+                  <span class="panel-meta" hidden=""></span>
+                </header>
+                <div class="panel-body">
+                  <dl class="kv">
+                    <dt>in this state</dt>
+                    <dd>51m · since 10:22 PM</dd>
+                    <dt>session age</dt>
+                    <dd>4d 6h · started Aug 30 5:13 PM</dd>
+                    <dt>project</dt>
+                    <dd>jarvis</dd>
+                    <dt>folder</dt>
+                    <dd>/Users/you/Projects/jarvis</dd>
+                    <dt>started as</dt>
+                    <dd>terminal</dd>
+                    <dt>steerable</dt>
+                    <dd class="tone-ok">yes — it bound an inbox socket</dd>
+                    <dt>main here</dt>
+                    <dd>yes</dd>
+                    <dt>because</dt>
+                    <dd>most recently active here</dd>
+                    <dt>context carried</dt>
+                    <dd class="tone-dim">not measured</dd>
+                    <dt>turns</dt>
+                    <dd>17</dd>
+                  </dl>
+                  <div class="sd-block">
+                    <span class="sd-label">Session id</span>
+                    <div class="sd-id">s-need</div>
+                  </div>
+                  <div class="sd-agent-note">Process 41001 · steered through 41001</div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="pv-note">
+        The panel in its other states. Note what each one refuses to claim: a
+        <code>needs you</code> with no recorded reason says so and quotes the
+        last thing the session said rather than inventing one; a session with
+        no timestamps reads “not recorded”, never <code>0</code>, which would
+        render as 1970; and <code>in this state</code> and
+        <code>session age</code> are two separate rows, because on the live
+        roster they were <strong>102 hours</strong> apart.
+      </p>
+
+      <div class="pv-grid">
+        <div class="pv-cell pv-aside">
+          <span class="pv-cap">needs you · no reason recorded, and nothing can reach it</span>
+          <div class="sd">
+            <div class="sd-head">
+              <span class="dot dot--fault tone-bad" aria-hidden="true"></span>
+              <h2 class="sd-name">Halloran</h2>
+              <button class="btn--quiet" type="button" title="Close (Esc)">Close</button>
+              <div class="sd-where">
+                <span>notes-app</span>
+                <span class="pill pill--ghost tone-idle">terminal</span>
+              </div>
+            </div>
+            <div class="callout callout--loud tone-bad">
+              <div class="callout-head">
+                <span class="dot dot--fault tone-bad" aria-hidden="true"></span>
+                <span class="callout-label">Waiting on you</span>
+                <span class="callout-meta">waiting for 3h</span>
+              </div>
+              <p class="callout-body">Postgres or SQLite for the roster store?</p>
+              <div class="callout-foot">
+                <span class="pill pill--ghost tone-warn">no inbox socket</span>
+                <span class="callout-note">No reason recorded — that is the last thing it said.</span>
+                <span class="callout-note">Nothing can reach this one but the terminal it is in.</span>
+              </div>
+            </div>
+            <section class="panel">
+              <header class="panel-head">
+                <h2 class="panel-title">What It Is Doing</h2>
+                <span class="panel-meta" hidden=""></span>
+              </header>
+              <div class="panel-body">
+                <div class="sd-block">
+                  <span class="sd-label">Its own title for this</span>
+                  <div class="sd-quote is-title">Pick a store for the roster</div>
+                </div>
+                <div class="sd-block">
+                  <span class="sd-label">It last said</span>
+                  <div class="sd-quote">Postgres or SQLite for the roster store?</div>
+                </div>
+              </div>
+            </section>
+            <section class="panel">
+              <header class="panel-head">
+                <h2 class="panel-title">Under It</h2>
+                <span class="panel-meta" hidden=""></span>
+              </header>
+              <div class="panel-body">
+                <div class="empty">No subagent transcripts under this conversation.</div>
+              </div>
+            </section>
+            <section class="panel">
+              <header class="panel-head">
+                <h2 class="panel-title">The Session</h2>
+                <span class="panel-meta" hidden=""></span>
+              </header>
+              <div class="panel-body">
+                <dl class="kv">
+                  <dt>in this state</dt>
+                  <dd>3h · since 8:13 PM</dd>
+                  <dt>session age</dt>
+                  <dd>5h · started 6:13 PM</dd>
+                  <dt>project</dt>
+                  <dd>notes-app</dd>
+                  <dt>folder</dt>
+                  <dd>/Users/you/Projects/notes-app</dd>
+                  <dt>started as</dt>
+                  <dd>terminal</dd>
+                  <dt>steerable</dt>
+                  <dd class="tone-warn">no — no inbox socket to reach it on</dd>
+                  <dt>main here</dt>
+                  <dd>no</dd>
+                </dl>
+                <div class="sd-block">
+                  <span class="sd-label">Session id</span>
+                  <div class="sd-id">s-need2</div>
+                </div>
+                <div class="sd-agent-note">Process 41001 · steered through 41001</div>
+              </div>
+            </section>
+          </div>
+        </div>
+        <div class="pv-cell pv-aside">
+          <span class="pv-cap">working · with the subagents it dispatched, named by the scan</span>
+          <div class="sd">
+            <div class="sd-head">
+              <span class="dot dot--live tone-accent" aria-hidden="true"></span>
+              <h2 class="sd-name">Ferrand</h2>
+              <button class="btn--quiet" type="button" title="Close (Esc)">Close</button>
+              <div class="sd-where">
+                <span>jarvis</span>
+                <span class="pill tone-accent">main here</span>
+                <span class="pill pill--ghost tone-idle">terminal</span>
+              </div>
+            </div>
+            <div class="callout tone-accent">
+              <div class="callout-head">
+                <span class="dot dot--live tone-accent" aria-hidden="true"></span>
+                <span class="callout-label">Working</span>
+                <span class="callout-meta">working for 2m</span>
+              </div>
+              <p class="callout-body">It is mid-turn. Nothing is asked of you.</p>
+              <div class="callout-foot" hidden=""></div>
+            </div>
+            <section class="panel">
+              <header class="panel-head">
+                <h2 class="panel-title">What It Is Doing</h2>
+                <span class="panel-meta" hidden=""></span>
+              </header>
+              <div class="panel-body">
+                <div class="sd-block">
+                  <span class="sd-label">Its own title for this</span>
+                  <div class="sd-quote is-title">Port the dashboard views onto the new primitives</div>
+                </div>
+                <div class="sd-block">
+                  <span class="sd-label">You last asked</span>
+                  <div class="sd-quote">carry on with the memory view</div>
+                </div>
+                <div class="sd-block">
+                  <span class="sd-label">It last said</span>
+                  <div class="sd-quote">Rewriting memory.ts against the new row primitive now.</div>
+                </div>
+                <div class="sd-block">
+                  <span class="sd-label">Last tools it reached for</span>
+                  <div class="sd-pills">
+                    <span class="pill pill--ghost tone-idle">Read</span>
+                    <span class="pill pill--ghost tone-idle">Edit</span>
+                    <span class="pill pill--ghost tone-idle">Bash</span>
+                    <span class="pill pill--ghost tone-idle">Grep</span>
+                    <span class="pill pill--ghost tone-idle">Write</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section class="panel tone-accent">
+              <header class="panel-head">
+                <h2 class="panel-title">Under It</h2>
+                <span class="panel-meta">139</span>
+              </header>
+              <div class="panel-body">
+                <div class="sd-block">
+                  <div class="sd-pills">
+                    <span class="pill tone-accent">2 active</span>
+                    <span class="pill pill--ghost tone-idle">139 dispatched</span>
+                  </div>
+                  <div class="sd-agent-note">"Active" means a transcript written in the last 90 seconds. It is a file age, not a live process — there is no process here to check.</div>
+                </div>
+                <div class="sd-block">
+                  <span class="sd-label">Agents, most recent first</span>
+                  <div class="stack">
+                    <div class="row tone-accent">
+                      <span class="row-lead">
+                        <span class="dot dot--live tone-accent" aria-hidden="true"></span>
+                      </span>
+                      <span class="row-main">
+                        <span class="row-title">Sweep the theme files for raw hues</span>
+                        <span class="row-sub" hidden=""></span>
+                      </span>
+                      <span class="row-trail">
+                        <span class="row-meta sess-agents">50k tok</span>
+                      </span>
+                      <div class="row-body">
+                        <div class="sd-agent-note">Explore</div>
+                      </div>
+                    </div>
+                    <div class="row tone-accent">
+                      <span class="row-lead">
+                        <span class="dot dot--live tone-accent" aria-hidden="true"></span>
+                      </span>
+                      <span class="row-main">
+                        <span class="row-title">Find every innerHTML in the frontend</span>
+                        <span class="row-sub" hidden=""></span>
+                      </span>
+                      <span class="row-trail">
+                        <span class="row-meta sess-agents">51k tok</span>
+                      </span>
+                      <div class="row-body">
+                        <div class="sd-agent-note">Explore</div>
+                      </div>
+                    </div>
+                    <div class="row row--dim tone-idle">
+                      <span class="row-lead">
+                        <span class="dot dot--done tone-ok" aria-hidden="true"></span>
+                      </span>
+                      <span class="row-main">
+                        <span class="row-title">Read session_watch and report what /api/sessions omits</span>
+                        <span class="row-sub" hidden=""></span>
+                      </span>
+                      <span class="row-trail">
+                        <span class="row-meta sess-agents">52k tok</span>
+                      </span>
+                      <div class="row-body">
+                        <div class="sd-agent-note">Explore</div>
+                      </div>
+                    </div>
+                    <div class="row row--dim tone-idle">
+                      <span class="row-lead">
+                        <span class="dot dot--done tone-ok" aria-hidden="true"></span>
+                      </span>
+                      <span class="row-main">
+                        <span class="row-title">Check the preview page against the shipped CSS</span>
+                        <span class="row-sub" hidden=""></span>
+                      </span>
+                      <span class="row-trail">
+                        <span class="row-meta sess-agents">53k tok</span>
+                      </span>
+                      <div class="row-body">
+                        <div class="sd-agent-note">Explore</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section class="panel">
+              <header class="panel-head">
+                <h2 class="panel-title">The Session</h2>
+                <span class="panel-meta" hidden=""></span>
+              </header>
+              <div class="panel-body">
+                <dl class="kv">
+                  <dt>in this state</dt>
+                  <dd>2m · since 11:10 PM</dd>
+                  <dt>session age</dt>
+                  <dd>4h · started 7:13 PM</dd>
+                  <dt>project</dt>
+                  <dd>jarvis</dd>
+                  <dt>folder</dt>
+                  <dd>/Users/you/Projects/jarvis</dd>
+                  <dt>started as</dt>
+                  <dd>terminal</dd>
+                  <dt>steerable</dt>
+                  <dd class="tone-ok">yes — it bound an inbox socket</dd>
+                  <dt>main here</dt>
+                  <dd>yes</dd>
+                  <dt>because</dt>
+                  <dd>most recently active here</dd>
+                  <dt>context carried</dt>
+                  <dd>132k tok on its last turn</dd>
+                  <dt>turns</dt>
+                  <dd>42</dd>
+                </dl>
+                <div class="sd-block">
+                  <span class="sd-label">Session id</span>
+                  <div class="sd-id">s-work</div>
+                </div>
+                <div class="sd-agent-note">Process 41001 · steered through 41001</div>
+              </div>
+            </section>
+          </div>
+        </div>
+        <div class="pv-cell pv-aside">
+          <span class="pv-cap">idle · nothing is asked of you</span>
+          <div class="sd">
+            <div class="sd-head">
+              <span class="dot dot--done tone-ok" aria-hidden="true"></span>
+              <h2 class="sd-name">Osgood</h2>
+              <button class="btn--quiet" type="button" title="Close (Esc)">Close</button>
+              <div class="sd-where">
+                <span>jarvis</span>
+                <span class="pill pill--ghost tone-idle">terminal</span>
+              </div>
+            </div>
+            <div class="callout tone-ok">
+              <div class="callout-head">
+                <span class="dot dot--done tone-ok" aria-hidden="true"></span>
+                <span class="callout-label">Idle</span>
+                <span class="callout-meta">idle for 18m</span>
+              </div>
+              <p class="callout-body">It finished and stopped. Nothing is asked of you.</p>
+              <div class="callout-foot" hidden=""></div>
+            </div>
+            <section class="panel">
+              <header class="panel-head">
+                <h2 class="panel-title">What It Is Doing</h2>
+                <span class="panel-meta" hidden=""></span>
+              </header>
+              <div class="panel-body">
+                <div class="sd-block">
+                  <span class="sd-label">Its own title for this</span>
+                  <div class="sd-quote is-title">Run-store index migration</div>
+                </div>
+                <div class="sd-block">
+                  <span class="sd-label">It last said</span>
+                  <div class="sd-quote">Done. The index is in and the suite is green.</div>
+                </div>
+                <div class="sd-block">
+                  <span class="sd-label">Last tools it reached for</span>
+                  <div class="sd-pills">
+                    <span class="pill pill--ghost tone-idle">Bash</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section class="panel">
+              <header class="panel-head">
+                <h2 class="panel-title">Under It</h2>
+                <span class="panel-meta" hidden=""></span>
+              </header>
+              <div class="panel-body">
+                <div class="empty">No subagent transcripts under this conversation.</div>
+              </div>
+            </section>
+            <section class="panel">
+              <header class="panel-head">
+                <h2 class="panel-title">The Session</h2>
+                <span class="panel-meta" hidden=""></span>
+              </header>
+              <div class="panel-body">
+                <dl class="kv">
+                  <dt>in this state</dt>
+                  <dd>18m · since 10:55 PM</dd>
+                  <dt>session age</dt>
+                  <dd>4h · started 7:13 PM</dd>
+                  <dt>project</dt>
+                  <dd>jarvis</dd>
+                  <dt>folder</dt>
+                  <dd>/Users/you/Projects/jarvis</dd>
+                  <dt>started as</dt>
+                  <dd>terminal</dd>
+                  <dt>steerable</dt>
+                  <dd class="tone-ok">yes — it bound an inbox socket</dd>
+                  <dt>main here</dt>
+                  <dd>no</dd>
+                </dl>
+                <div class="sd-block">
+                  <span class="sd-label">Session id</span>
+                  <div class="sd-id">s-idle</div>
+                </div>
+                <div class="sd-agent-note">Process 41001 · steered through 41001</div>
+              </div>
+            </section>
+          </div>
+        </div>
+        <div class="pv-cell pv-aside">
+          <span class="pv-cap">fresh · nobody has prompted it, so there is nothing to read</span>
+          <div class="sd">
+            <div class="sd-head">
+              <span class="dot dot--pending tone-dim" aria-hidden="true"></span>
+              <h2 class="sd-name">Ivers</h2>
+              <button class="btn--quiet" type="button" title="Close (Esc)">Close</button>
+              <div class="sd-where">
+                <span>jarvis</span>
+                <span class="pill pill--ghost tone-idle">terminal</span>
+              </div>
+            </div>
+            <div class="callout tone-dim">
+              <div class="callout-head">
+                <span class="dot dot--pending tone-dim" aria-hidden="true"></span>
+                <span class="callout-label">Never prompted</span>
+                <span class="callout-meta">alive for 4d</span>
+              </div>
+              <p class="callout-body">Nobody has typed into this one. It has written no transcript, so there is nothing to read and nothing to answer.</p>
+              <div class="callout-foot" hidden=""></div>
+            </div>
+            <section class="panel">
+              <header class="panel-head">
+                <h2 class="panel-title">What It Is Doing</h2>
+                <span class="panel-meta" hidden=""></span>
+              </header>
+              <div class="panel-body">
+                <div class="empty">No transcript exists for this session — nobody has prompted it.</div>
+              </div>
+            </section>
+            <section class="panel">
+              <header class="panel-head">
+                <h2 class="panel-title">Under It</h2>
+                <span class="panel-meta" hidden=""></span>
+              </header>
+              <div class="panel-body">
+                <div class="empty">No subagent transcripts under this conversation.</div>
+              </div>
+            </section>
+            <section class="panel">
+              <header class="panel-head">
+                <h2 class="panel-title">The Session</h2>
+                <span class="panel-meta" hidden=""></span>
+              </header>
+              <div class="panel-body">
+                <dl class="kv">
+                  <dt>in this state</dt>
+                  <dd>4d · since Aug 30 11:13 PM</dd>
+                  <dt>session age</dt>
+                  <dd>4d · started Aug 30 11:13 PM</dd>
+                  <dt>project</dt>
+                  <dd>jarvis</dd>
+                  <dt>folder</dt>
+                  <dd>/Users/you/Projects/jarvis</dd>
+                  <dt>started as</dt>
+                  <dd>terminal</dd>
+                  <dt>steerable</dt>
+                  <dd class="tone-warn">no — no inbox socket to reach it on</dd>
+                  <dt>main here</dt>
+                  <dd>no</dd>
+                </dl>
+                <div class="sd-block">
+                  <span class="sd-label">Session id</span>
+                  <div class="sd-id">s-fresh</div>
+                </div>
+                <div class="sd-agent-note">Process 41001 · steered through 41001</div>
+              </div>
+            </section>
+          </div>
+        </div>
+        <div class="pv-cell pv-aside">
+          <span class="pv-cap">nothing selected · the column carries a tally, not dead space</span>
+          <div class="sd">
+            <section class="panel">
+              <header class="panel-head">
+                <h2 class="panel-title">At a Glance</h2>
+                <span class="panel-meta">8</span>
+              </header>
+              <div class="panel-body">
+                <div class="stack">
+                  <div class="row row--attn tone-bad">
+                    <span class="row-lead">
+                      <span class="dot dot--fault tone-bad" aria-hidden="true"></span>
+                    </span>
+                    <span class="row-main">
+                      <span class="row-title">needs you</span>
+                      <span class="row-sub" hidden=""></span>
+                    </span>
+                    <span class="row-trail">
+                      <span class="row-meta sess-count is-strong">2</span>
+                    </span>
+                  </div>
+                  <div class="row tone-accent">
+                    <span class="row-lead">
+                      <span class="dot dot--live tone-accent" aria-hidden="true"></span>
+                    </span>
+                    <span class="row-main">
+                      <span class="row-title">working</span>
+                      <span class="row-sub" hidden=""></span>
+                    </span>
+                    <span class="row-trail">
+                      <span class="row-meta sess-count is-strong">1</span>
+                    </span>
+                  </div>
+                  <div class="row tone-idle">
+                    <span class="row-lead">
+                      <span class="dot dot--void tone-idle" aria-hidden="true"></span>
+                    </span>
+                    <span class="row-main">
+                      <span class="row-title">unknown</span>
+                      <span class="row-sub" hidden=""></span>
+                    </span>
+                    <span class="row-trail">
+                      <span class="row-meta sess-count is-strong">1</span>
+                    </span>
+                  </div>
+                  <div class="row tone-warn">
+                    <span class="row-lead">
+                      <span class="dot dot--pending tone-warn" aria-hidden="true"></span>
+                    </span>
+                    <span class="row-main">
+                      <span class="row-title">shell</span>
+                      <span class="row-sub" hidden=""></span>
+                    </span>
+                    <span class="row-trail">
+                      <span class="row-meta sess-count is-strong">1</span>
+                    </span>
+                  </div>
+                  <div class="row tone-ok">
+                    <span class="row-lead">
+                      <span class="dot dot--done tone-ok" aria-hidden="true"></span>
+                    </span>
+                    <span class="row-main">
+                      <span class="row-title">idle</span>
+                      <span class="row-sub" hidden=""></span>
+                    </span>
+                    <span class="row-trail">
+                      <span class="row-meta sess-count is-strong">1</span>
+                    </span>
+                  </div>
+                  <div class="row tone-idle">
+                    <span class="row-lead">
+                      <span class="dot dot--void tone-idle" aria-hidden="true"></span>
+                    </span>
+                    <span class="row-main">
+                      <span class="row-title">gone</span>
+                      <span class="row-sub" hidden=""></span>
+                    </span>
+                    <span class="row-trail">
+                      <span class="row-meta sess-count is-strong">1</span>
+                    </span>
+                  </div>
+                  <div class="row tone-dim">
+                    <span class="row-lead">
+                      <span class="dot dot--pending tone-dim" aria-hidden="true"></span>
+                    </span>
+                    <span class="row-main">
+                      <span class="row-title">fresh</span>
+                      <span class="row-sub" hidden=""></span>
+                    </span>
+                    <span class="row-trail">
+                      <span class="row-meta sess-count is-strong">1</span>
+                    </span>
+                  </div>
+                </div>
+                <div class="sd-agent-note">Pick one for what it is doing, whether it wants you, and why.</div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <p class="pv-note">
+        And the empty case — no conversations on the machine at all. Calm,
+        never an error, and it does not pretend a count of zero is a
+        measurement of anything.
+      </p>
+
+      <div class="pv-cell">
+        <span class="pv-cap">No sessions</span>
+        <div class="split split--aside">
+          <div class="split-master">
+            <section class="panel panel--alert tone-bad" hidden="">
+              <header class="panel-head">
+                <h2 class="panel-title">Needs You</h2>
+                <span class="panel-meta">0</span>
+              </header>
+              <div class="panel-body">
+                <div class="stack"></div>
+              </div>
+            </section>
+            <section class="panel">
+              <header class="panel-head">
+                <h2 class="panel-title">Sessions by Project</h2>
+                <span class="panel-meta" hidden=""></span>
+              </header>
+              <div class="panel-body">
+                <div class="empty">No sessions found.</div>
+              </div>
+            </section>
+          </div>
+          <div class="split-detail">
+            <div class="sd">
+              <section class="panel">
+                <header class="panel-head">
+                  <h2 class="panel-title">At a Glance</h2>
+                  <span class="panel-meta" hidden=""></span>
+                </header>
+                <div class="panel-body">
+                  <div class="empty">No Claude Code conversations on this machine.</div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 08 · MEMORY ════════════════════════════════════════════════════ -->
+    <section class="pv-section">
+      <div class="pv-head">
+        <span class="pv-num">08</span>
+        <h2 class="pv-title">Memory</h2>
+      </div>
+      <p class="pv-note">
+        The same row, doing a third job. The latest handover gets an accent
+        frame because it is the one document JARVIS actually reloads every
+        conversation.
+      </p>
+
+      <div class="view">
+        <section class="panel tone-accent">
+          <header class="panel-head">
+            <h2 class="panel-title">Latest Handover</h2>
+            <span class="panel-meta">2026-09-03-1412-dashboard-wave-a</span>
+          </header>
+          <div class="panel-body">
+<pre class="doc"># Handover — dashboard wave A
+
+Built the token layer and the six primitives, then ported Runs, Sessions
+and Memory onto them. The preview page at frontend/dashboard-preview.html
+is the thing to look at before judging anything.
+
+Open: the three later views (Specs, Projects, Usage) build on `panel`,
+`row`, `readout` and `bar` — none of them should need new CSS beyond
+their own layout.</pre>
+          </div>
+        </section>
+
+        <section class="panel">
+          <header class="panel-head">
+            <h2 class="panel-title">Memories</h2>
+            <span class="panel-meta">9</span>
+          </header>
+          <div class="panel-body">
+            <div class="stack">
+              <div class="row row--action tone-accent">
+                <span class="row-lead"></span>
+                <span class="row-main">
+                  <span class="row-title">The arc reactor runs hot above 3 GW</span>
+                  <span class="row-sub">the palladium core was the limit, not the housing</span>
+                </span>
+                <span class="row-trail">
+                  <span class="row-meta memory-row-when">Sep 2, 21:14</span>
+                </span>
+              </div>
+              <div class="row row--action">
+                <span class="row-lead"></span>
+                <span class="row-main">
+                  <span class="row-title">Dummy is not to be trusted with the fire extinguisher</span>
+                  <span class="row-sub">dummy-is-not-to-be-trusted-with-the-fire-extinguisher</span>
+                </span>
+                <span class="row-trail">
+                  <span class="row-meta memory-row-when">Aug 30, 09:02</span>
+                </span>
+              </div>
+              <div class="row row--action">
+                <span class="row-lead"></span>
+                <span class="row-main">
+                  <span class="row-title">Mark II flight ceiling</span>
+                  <span class="row-sub">icing begins at 40,000 ft; the Mark III fixes it</span>
+                </span>
+                <span class="row-trail">
+                  <span class="row-meta memory-row-when">Aug 24, 17:40</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <header class="panel-head">
+            <h2 class="panel-title">On Disk</h2>
+          </header>
+          <div class="panel-body">
+            <div class="memory-hint">
+              Plain Markdown on disk. Edit it directly — JARVIS reads it fresh
+              every conversation.
+            </div>
+            <div class="memory-path-row">
+              <code class="memory-path-value">~/jarvis/data/jarvis/</code>
+              <button type="button">Copy path</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- ═══ 09 · DETAIL PANE ═══════════════════════════════════════════════ -->
+    <section class="pv-section">
+      <div class="pv-head">
+        <span class="pv-num">09</span>
+        <h2 class="pv-title">Detail pane</h2>
+      </div>
+      <p class="pv-note">
+        Slides in from the right over the list. Shown unpinned here. The
+        transcript is arbitrary model output and is the single most important
+        place in this codebase that never touches innerHTML.
+      </p>
+
+      <aside class="pane brackets pv-pane">
+        <header class="pane-head">
+          <span class="dot dot--live tone-accent"></span>
+          <h2 class="pane-title">jarvis</h2>
+          <span class="pill tone-accent">running</span>
+          <button type="button" class="btn--quiet pane-close">Close</button>
+        </header>
+        <div class="pane-body">
+          <p class="pane-prompt">
+            Build the holographic dashboard shell and port the three views onto
+            it without losing any behaviour.
+          </p>
+          <dl class="kv">
+            <dt>elapsed</dt><dd>252s</dd>
+            <dt>cost</dt><dd>$0.8734</dd>
+            <dt>tokens</dt><dd>in 18422 / out 9104 / cache 214880</dd>
+            <dt>model</dt><dd>claude-sonnet-4-6</dd>
+            <dt>session</dt><dd>run_01k9wq3m7c8t</dd>
+          </dl>
+          <div class="pane-actions">
+            <button type="button" class="tone-bad">Cancel</button>
+          </div>
+          <div class="transcript">
+            <div class="ev assistant">Read: frontend/src/dashboard/style.css</div>
+            <div class="ev assistant">Write: frontend/src/dashboard/theme/tokens.css</div>
+            <div class="ev assistant">I'll define the tone mechanism once so every primitive colours itself the same way.</div>
+            <div class="ev assistant">Edit: frontend/src/dashboard/theme/primitives.css</div>
+            <div class="ev assistant">Bash: npx tsc --noEmit</div>
+            <div class="ev result">result: typecheck clean, 0 errors</div>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <!-- ═══ 10 · EMPTY, BUTTONS, BANNER ════════════════════════════════════ -->
+    <section class="pv-section">
+      <div class="pv-head">
+        <span class="pv-num">10</span>
+        <h2 class="pv-title">Odds and ends</h2>
+      </div>
+      <div class="pv-cols">
+        <section class="panel">
+          <header class="panel-head"><h2 class="panel-title">Empty states</h2></header>
+          <div class="panel-body">
+            <div class="empty">No runs yet. Ask JARVIS to build something.</div>
+            <div style="height: var(--sp-3)"></div>
+            <div class="empty empty--sm">Nothing but fresh sessions.</div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <header class="panel-head"><h2 class="panel-title">Actions</h2></header>
+          <div class="panel-body pv-grid">
+            <button type="button" class="tone-accent">Retry</button>
+            <button type="button" class="tone-bad">Cancel</button>
+            <button type="button" class="btn--quiet">Load earlier (412 more)</button>
+            <button type="button" disabled>Disabled</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <header class="panel-head"><h2 class="panel-title">Link state</h2></header>
+          <div class="panel-body pv-grid">
+            <span class="link-state tone-ok">
+              <span class="dot dot--done tone-ok"></span>Link OK
+            </span>
+            <span class="link-state tone-warn">
+              <span class="dot dot--live tone-warn"></span>Reconnecting
+            </span>
+            <span class="link-state tone-bad">
+              <span class="dot dot--fault tone-bad"></span>Offline
+            </span>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- ═══ 11 · PROJECTS ══════════════════════════════════════════════════ -->
+    <section class="pv-section">
+      <div class="pv-head">
+        <span class="pv-num">11</span>
+        <h2 class="pv-title">Projects</h2>
+      </div>
+      <p class="pv-note">
+        Master-detail: the list orders itself by what deserves attention —
+        needing you, then active, then the rest by recency — never
+        alphabetically. Three states below: a project with everything, a
+        project with nothing in it yet, and a project whose directory is
+        gone.
+      </p>
+
+      <div class="view">
+        <div class="projects-layout">
+          <section class="panel proj-list-panel">
+            <header class="panel-head">
+              <h2 class="panel-title">Projects</h2>
+              <span class="panel-meta">4</span>
+            </header>
+            <div class="panel-body">
+              <div class="stack proj-list">
+                <div class="row row--action row--attn tone-bad is-selected">
+                  <span class="row-lead"><span class="dot dot--fault tone-bad"></span></span>
+                  <span class="row-main">
+                    <span class="row-title">chitauri</span>
+                    <span class="row-sub">/Users/you/Projects/chitauri</span>
+                  </span>
+                  <span class="row-trail">
+                    <span class="pill tone-bad">needs you</span>
+                    <span class="row-meta" style="--w: 68px">6m ago</span>
+                  </span>
+                </div>
+                <div class="row row--action tone-accent">
+                  <span class="row-lead"><span class="dot dot--live tone-accent"></span></span>
+                  <span class="row-main">
+                    <span class="row-title">jarvis</span>
+                    <span class="row-sub">/Users/you/Projects/jarvis</span>
+                  </span>
+                  <span class="row-trail">
+                    <span class="pill tone-accent">working</span>
+                    <span class="row-meta" style="--w: 68px">2m ago</span>
+                  </span>
+                </div>
+                <div class="row row--action tone-idle">
+                  <span class="row-lead"><span class="dot dot--void tone-idle"></span></span>
+                  <span class="row-main">
+                    <span class="row-title">fresh-idea</span>
+                    <span class="row-sub">/Users/you/Desktop/fresh-idea</span>
+                  </span>
+                  <span class="row-trail">
+                    <span class="pill tone-idle">idle</span>
+                    <span class="row-meta" style="--w: 68px">3d ago</span>
+                  </span>
+                </div>
+                <div class="row row--action row--dim tone-dim">
+                  <span class="row-lead"><span class="dot dot--void tone-dim"></span></span>
+                  <span class="row-main">
+                    <span class="row-title">old-prototype</span>
+                    <span class="row-sub">directory not found</span>
+                  </span>
+                  <span class="row-trail">
+                    <span class="pill tone-idle">gone</span>
+                    <span class="pill pill--ghost tone-warn">missing</span>
+                    <span class="row-meta" style="--w: 68px">41d ago</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="proj-detail">
+            <div class="proj-detail-head">
+              <span class="dot dot--fault tone-bad"></span>
+              <h2 class="proj-detail-title">chitauri</h2>
+            </div>
+
+            <section class="panel">
+              <header class="panel-head"><h2 class="panel-title">Where It Is</h2></header>
+              <div class="panel-body">
+                <div class="proj-path-row">
+                  <code class="proj-path-value">/Users/you/Projects/chitauri</code>
+                </div>
+                <div class="pane-actions proj-open-actions">
+                  <button type="button">Open in Editor</button>
+                  <button type="button">Open in Terminal</button>
+                  <button type="button">Open in Browser</button>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel panel--alert tone-bad">
+              <header class="panel-head">
+                <h2 class="panel-title">Conversations</h2>
+                <span class="panel-meta">2</span>
+              </header>
+              <div class="panel-body">
+                <div class="stack">
+                  <div class="row row--attn tone-bad">
+                    <span class="row-lead"><span class="dot dot--fault tone-bad"></span></span>
+                    <span class="row-main"><span class="row-title">Wexler</span></span>
+                    <span class="row-trail">
+                      <span class="pill tone-bad">needs you</span>
+                      <span class="row-meta" style="--w: 62px">6m ago</span>
+                    </span>
+                    <div class="row-body">
+                      <div class="session-reason">
+                        Asked whether to drop the legacy `run_events.payload_json`
+                        column — waiting on a yes or no before it migrates.
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row tone-ok">
+                    <span class="row-lead"><span class="dot dot--done tone-ok"></span></span>
+                    <span class="row-main"><span class="row-title">Ferrand</span></span>
+                    <span class="row-trail">
+                      <span class="pill tone-ok">idle</span>
+                      <span class="row-meta" style="--w: 62px">2h ago</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel tone-bad">
+              <header class="panel-head">
+                <h2 class="panel-title">Runs</h2>
+                <span class="panel-meta">3</span>
+              </header>
+              <div class="panel-body">
+                <div class="stack">
+                  <div class="row row--attn tone-bad">
+                    <span class="row-lead"><span class="dot dot--fault tone-bad"></span></span>
+                    <span class="row-main"><span class="row-title">migrate the run_events table</span></span>
+                    <span class="row-trail">
+                      <span class="pill tone-bad">failed</span>
+                      <span class="row-meta" style="--w: 70px">1m 40s</span>
+                      <span class="row-meta" style="--w: 70px">4.1k tok</span>
+                      <span class="row-meta" style="--w: 52px">4:02pm</span>
+                    </span>
+                  </div>
+                  <div class="row tone-ok">
+                    <span class="row-lead"><span class="dot dot--done tone-ok"></span></span>
+                    <span class="row-main"><span class="row-title">add the export button</span></span>
+                    <span class="row-trail">
+                      <span class="pill tone-ok">succeeded</span>
+                      <span class="row-meta" style="--w: 70px">3m 12s</span>
+                      <span class="row-meta" style="--w: 70px">18.9k tok</span>
+                      <span class="row-meta" style="--w: 52px">2:41pm</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel tone-bad">
+              <header class="panel-head"><h2 class="panel-title">Build</h2></header>
+              <div class="panel-body">
+                <div class="proj-build-pills">
+                  <span class="pill pill--ghost tone-ok">spec written</span>
+                  <span class="pill pill--ghost tone-ok">plan written</span>
+                  <span class="pill tone-bad">stalled</span>
+                </div>
+                <div class="bar tone-bad" role="progressbar" aria-valuenow="44"
+                     aria-valuemin="0" aria-valuemax="100">
+                  <div class="bar-head">
+                    <span class="bar-label">Tasks done</span>
+                    <span class="bar-value">4 of 9</span>
+                  </div>
+                  <div class="bar-track"><div class="bar-fill" style="--pct: 44%"></div></div>
+                </div>
+                <div class="proj-build-note">On Task 5: Backfill the new column — nothing of mine is running it.</div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <header class="panel-head"><h2 class="panel-title">Repository</h2></header>
+              <div class="panel-body">
+                <div class="proj-repo-headline">
+                  chitauri — mostly Python (61 files), TypeScript (24). 108 files
+                  in all. A git repository on main.
+                </div>
+                <pre class="doc proj-repo-body">README: A small internal tool for tracking client cost estimates against actuals.
+Top level: folders app/, migrations/, tests/; files README.md, pyproject.toml</pre>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div style="height: var(--sp-6)"></div>
+
+        <div class="pv-cols">
+          <div class="proj-detail">
+            <div class="proj-detail-head">
+              <span class="dot dot--void tone-idle"></span>
+              <h2 class="proj-detail-title">fresh-idea</h2>
+            </div>
+            <section class="panel">
+              <header class="panel-head"><h2 class="panel-title">Where It Is</h2></header>
+              <div class="panel-body">
+                <div class="proj-path-row">
+                  <code class="proj-path-value">/Users/you/Desktop/fresh-idea</code>
+                </div>
+                <div class="pane-actions proj-open-actions">
+                  <button type="button">Open in Editor</button>
+                  <button type="button">Open in Terminal</button>
+                  <button type="button">Open in Browser</button>
+                </div>
+              </div>
+            </section>
+            <section class="panel">
+              <header class="panel-head"><h2 class="panel-title">Conversations</h2></header>
+              <div class="panel-body"><div class="empty">No conversations for this project.</div></div>
+            </section>
+            <section class="panel">
+              <header class="panel-head"><h2 class="panel-title">Runs</h2></header>
+              <div class="panel-body"><div class="empty">No runs yet.</div></div>
+            </section>
+            <section class="panel">
+              <header class="panel-head"><h2 class="panel-title">Build</h2></header>
+              <div class="panel-body"><div class="empty">No build started for this project.</div></div>
+            </section>
+          </div>
+
+          <div class="proj-detail">
+            <div class="proj-detail-head">
+              <span class="dot dot--void tone-dim"></span>
+              <h2 class="proj-detail-title">old-prototype</h2>
+              <span class="pill tone-bad">directory missing</span>
+            </div>
+            <section class="panel tone-warn">
+              <header class="panel-head"><h2 class="panel-title">Where It Is</h2></header>
+              <div class="panel-body">
+                <div class="proj-path-row">
+                  <code class="proj-path-value">/Users/you/Desktop/old-prototype</code>
+                  <span class="pill tone-warn">not found on disk</span>
+                </div>
+                <div class="pane-actions proj-open-actions">
+                  <button type="button" disabled>Open in Editor</button>
+                  <button type="button" disabled>Open in Terminal</button>
+                  <button type="button" disabled>Open in Browser</button>
+                </div>
+              </div>
+            </section>
+            <section class="panel">
+              <header class="panel-head"><h2 class="panel-title">Repository</h2></header>
+              <div class="panel-body"><div class="empty">Directory not found on disk — nothing to read.</div></div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 12 · SPECS ═════════════════════════════════════════════════════ -->
+    <section class="pv-section">
+      <div class="pv-head">
+        <span class="pv-num">12</span>
+        <h2 class="pv-title">Specs — the review surface</h2>
+      </div>
+      <p class="pv-note">
+        Where a person reads what JARVIS proposes and what JARVIS produced,
+        and answers out loud. Not a spec viewer: one surface with two states,
+        a document <em>awaiting approval</em> and finished work
+        <em>awaiting review</em>. The big numbers beside the sections are the
+        interface — the user says “change three”, and JARVIS resolves that
+        against the same numbering, because both sides read it out of one
+        function in <code>specs.py</code>. There is no comment box, no
+        editor and no approve button anywhere below: the page is for reading,
+        and the answer is spoken.
+      </p>
+
+      <!-- STATE 1 — a design awaiting approval. -->
+      <div class="pv-cell">
+        <span class="pv-cap">State 1 · awaiting approval</span>
+        <div class="specs-split">
+          <div class="specs-master">
+            <section class="panel">
+              <header class="panel-head">
+                <h2 class="panel-title">Under Review</h2>
+                <span class="panel-meta">3</span>
+              </header>
+              <div class="panel-body">
+                <div class="stack">
+                  <div class="row row--action row--attn tone-warn is-open" role="button">
+                    <span class="row-lead">
+                      <span class="dot dot--fault tone-warn" aria-hidden="true"></span>
+                    </span>
+                    <span class="row-main">
+                      <span class="row-title">claude-browser</span>
+                      <span class="row-sub">needs you</span>
+                    </span>
+                    <span class="row-trail">
+                      <span class="row-meta specs-count" style="--w: 56px">1 doc</span>
+                    </span>
+                  </div>
+                  <div class="row row--action tone-accent" role="button">
+                    <span class="row-lead">
+                      <span class="dot dot--live tone-accent" aria-hidden="true"></span>
+                    </span>
+                    <span class="row-main">
+                      <span class="row-title">chitauri</span>
+                      <span class="row-sub">building</span>
+                    </span>
+                    <span class="row-trail">
+                      <span class="row-meta specs-count" style="--w: 56px">2 docs</span>
+                    </span>
+                    <div class="row-body">
+                      <div class="bar bar--slim tone-accent" role="progressbar"
+                           aria-valuenow="44" aria-valuemin="0" aria-valuemax="100">
+                        <div class="bar-head">
+                          <span class="bar-label">Tasks</span>
+                          <span class="bar-value">4/9</span>
+                        </div>
+                        <div class="bar-track"><div class="bar-fill" style="--pct: 44%"></div></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row row--action tone-ok" role="button">
+                    <span class="row-lead">
+                      <span class="dot dot--done tone-ok" aria-hidden="true"></span>
+                    </span>
+                    <span class="row-main">
+                      <span class="row-title">orb-tuner</span>
+                      <span class="row-sub">for review</span>
+                    </span>
+                    <span class="row-trail">
+                      <span class="row-meta specs-count" style="--w: 56px">2 docs</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <header class="panel-head">
+                <h2 class="panel-title">Documents</h2>
+                <span class="panel-meta">1</span>
+              </header>
+              <div class="panel-body">
+                <div class="stack">
+                  <div class="row row--action tone-warn is-open" role="button">
+                    <span class="row-lead">
+                      <span class="pill pill--ghost tone-accent">spec</span>
+                    </span>
+                    <span class="row-main">
+                      <span class="row-title">CLAUDE.md browser — Design</span>
+                      <span class="row-sub">4 sections</span>
+                    </span>
+                    <span class="row-trail">
+                      <span class="pill tone-warn">awaiting approval</span>
+                      <span class="row-meta specs-when" style="--w: 104px">Sep 3, 20:41</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <section class="panel panel--flush specs-detail">
+            <header class="panel-head">
+              <h2 class="panel-title">CLAUDE.md browser — Design</h2>
+              <span class="panel-meta">spec · 4 sections</span>
+            </header>
+            <div class="panel-body specs-doc">
+              <div class="specs-band tone-warn">
+                <div class="specs-band-head">
+                  <span class="pill tone-warn">awaiting approval</span>
+                </div>
+                <p class="specs-band-line">
+                  Nobody has approved this yet. Read it, then tell JARVIS
+                  “approved” — or name a section to change.
+                </p>
+              </div>
+              <p class="specs-howto">
+                Say a number to talk about a section — “read me three”,
+                “change five”, “drop the last one”. Say “approved” when it is
+                right.
+              </p>
+              <p class="specs-path">docs/superpowers/specs/2026-09-03-claude-md-browser-design.md</p>
+
+              <div class="md specs-preamble">
+                <blockquote class="md-quote">
+                  <p class="md-p">
+                    Written by JARVIS from the conversation in which this was
+                    agreed. It is the build’s source of truth.
+                  </p>
+                </blockquote>
+              </div>
+
+              <div class="specs-sections">
+                <article class="specs-section">
+                  <div class="specs-section-num">01</div>
+                  <div class="specs-section-body">
+                    <h3 class="specs-section-title">What we agreed</h3>
+                    <div class="md">
+                      <p class="md-p">
+                        A small local page that lists every
+                        <code class="md-inline-code">CLAUDE.md</code> on this
+                        machine and lets me edit one in place.
+                        <strong class="md-strong">Read the files off disk</strong>
+                        — no database, no index, no watcher.
+                      </p>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="specs-section">
+                  <div class="specs-section-num">02</div>
+                  <div class="specs-section-body">
+                    <h3 class="specs-section-title">Constraints</h3>
+                    <div class="md">
+                      <ul class="md-list">
+                        <li class="md-item">No new dependencies.</li>
+                        <li class="md-item">
+                          The walk is capped at
+                          <code class="md-inline-code">20_000</code> entries.
+                        </li>
+                        <li class="md-item">Nothing leaves the machine.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="specs-section">
+                  <div class="specs-section-num">03</div>
+                  <div class="specs-section-body">
+                    <h3 class="specs-section-title">The shape of the page</h3>
+                    <div class="md">
+                      <p class="md-p">A list on the left, the file on the right.</p>
+                      <pre class="md-code"><code>GET  /api/claude-files
+GET  /api/claude-files?path=…
+POST /api/claude-files</code></pre>
+                      <p class="md-p">
+                        A heading inside that fence is
+                        <em class="md-em">not</em> a section — which is why
+                        the numbers above stay put.
+                      </p>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="specs-section">
+                  <div class="specs-section-num">04</div>
+                  <div class="specs-section-body">
+                    <h3 class="specs-section-title">Non-goals</h3>
+                    <div class="md">
+                      <p class="md-p">No accounts. No sync. No editing anything
+                        that is not a <code class="md-inline-code">CLAUDE.md</code>.</p>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- STATE 2 — a plan in flight, and the same plan finished. -->
+      <div class="pv-cell" style="margin-top: var(--sp-6)">
+        <span class="pv-cap">State 2 · a plan in flight, and the work waiting to be reviewed</span>
+        <div class="pv-cols">
+          <section class="panel panel--flush specs-detail">
+            <header class="panel-head">
+              <h2 class="panel-title">chitauri — Implementation Plan</h2>
+              <span class="panel-meta">plan · 9 sections</span>
+            </header>
+            <div class="panel-body specs-doc">
+              <div class="specs-band tone-ok">
+                <div class="specs-band-head">
+                  <span class="pill tone-ok">approved</span>
+                  <span class="specs-band-when">approved Sep 3, 14:02</span>
+                </div>
+                <p class="specs-band-line">
+                  You approved these words. A revision will say so here.
+                </p>
+                <div class="specs-progress">
+                  <div class="bar tone-accent" role="progressbar" aria-valuenow="44"
+                       aria-valuemin="0" aria-valuemax="100">
+                    <div class="bar-head">
+                      <span class="bar-label">Tasks done</span>
+                      <span class="bar-value">4 of 9</span>
+                    </div>
+                    <div class="bar-track"><div class="bar-fill" style="--pct: 44%"></div></div>
+                  </div>
+                  <p class="specs-progress-note">
+                    <span class="specs-progress-now">Now</span>
+                    <span class="specs-jump-num">05</span>
+                    Serve the ledger
+                    <span class="specs-progress-steps">11/26 steps</span>
+                  </p>
+                </div>
+              </div>
+
+              <div class="specs-sections">
+                <article class="specs-section">
+                  <div class="specs-section-num">05</div>
+                  <div class="specs-section-body">
+                    <h3 class="specs-section-title">Task 5: Serve the ledger</h3>
+                    <div class="md">
+                      <ul class="md-list">
+                        <li class="md-item md-task is-done">
+                          <span class="md-box tone-ok" aria-hidden="true">✓</span>
+                          <span class="md-task-text">A failing test for the empty ledger</span>
+                        </li>
+                        <li class="md-item md-task is-done">
+                          <span class="md-box tone-ok" aria-hidden="true">✓</span>
+                          <span class="md-task-text">The endpoint, returning rows</span>
+                        </li>
+                        <li class="md-item md-task is-open">
+                          <span class="md-box tone-dim" aria-hidden="true"></span>
+                          <span class="md-task-text">Sort by <code class="md-inline-code">posted_at</code>, newest first</span>
+                        </li>
+                        <li class="md-item md-task is-open">
+                          <span class="md-box tone-dim" aria-hidden="true"></span>
+                          <span class="md-task-text">Cap the page at 200 rows</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel panel--flush specs-detail">
+            <header class="panel-head">
+              <h2 class="panel-title">orb-tuner — Implementation Plan</h2>
+              <span class="panel-meta">plan · 6 sections</span>
+            </header>
+            <div class="panel-body specs-doc">
+              <div class="specs-band tone-ok">
+                <div class="specs-band-head">
+                  <span class="pill tone-ok">approved</span>
+                  <span class="specs-band-when">approved Sep 2, 19:20</span>
+                </div>
+                <p class="specs-band-line">
+                  You approved these words. A revision will say so here.
+                </p>
+                <div class="specs-progress">
+                  <div class="bar tone-ok" role="progressbar" aria-valuenow="100"
+                       aria-valuemin="0" aria-valuemax="100">
+                    <div class="bar-head">
+                      <span class="bar-label">Tasks done</span>
+                      <span class="bar-value">6 of 6</span>
+                    </div>
+                    <div class="bar-track"><div class="bar-fill" style="--pct: 100%"></div></div>
+                  </div>
+                  <p class="specs-progress-note">
+                    Every task ticked. This is the work to review.
+                  </p>
+                </div>
+              </div>
+
+              <div class="specs-sections">
+                <article class="specs-section">
+                  <div class="specs-section-num">06</div>
+                  <div class="specs-section-body">
+                    <h3 class="specs-section-title">Task 6: Verify against the real orb</h3>
+                    <div class="md">
+                      <ul class="md-list">
+                        <li class="md-item md-task is-done">
+                          <span class="md-box tone-ok" aria-hidden="true">✓</span>
+                          <span class="md-task-text">Measured on the M1: 58–60fps at 12k particles</span>
+                        </li>
+                        <li class="md-item md-task is-done">
+                          <span class="md-box tone-ok" aria-hidden="true">✓</span>
+                          <span class="md-task-text">Full suite green</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- STATE 3 — superseded, and nothing at all. -->
+      <div class="pv-cell" style="margin-top: var(--sp-6)">
+        <span class="pv-cap">State 3 · superseded by a revision, and empty</span>
+        <div class="pv-cols">
+          <section class="panel panel--flush specs-detail">
+            <header class="panel-head">
+              <h2 class="panel-title">chitauri — Design</h2>
+              <span class="panel-meta">spec · 5 sections</span>
+            </header>
+            <div class="panel-body specs-doc">
+              <div class="specs-band tone-warn">
+                <div class="specs-band-head">
+                  <span class="pill tone-warn">revised since approval</span>
+                  <span class="specs-band-when">approved Sep 3, 14:02</span>
+                </div>
+                <p class="specs-band-line">
+                  This has been rewritten since you approved it. Read it again
+                  before it is built.
+                </p>
+              </div>
+              <p class="specs-howto">
+                Say a number to talk about a section — “read me three”,
+                “change five”, “drop the last one”. Say “approved” when it is
+                right.
+              </p>
+              <div class="specs-sections">
+                <article class="specs-section">
+                  <div class="specs-section-num">03</div>
+                  <div class="specs-section-body">
+                    <h3 class="specs-section-title">What changed</h3>
+                    <div class="md">
+                      <p class="md-p">
+                        The approval is recorded against a digest of the exact
+                        words. Change one of them and the yes does not carry
+                        over — which is the whole point of writing it down.
+                      </p>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </section>
+
+          <div class="specs-master">
+            <section class="panel">
+              <header class="panel-head">
+                <h2 class="panel-title">Under Review</h2>
+              </header>
+              <div class="panel-body">
+                <div class="empty">
+                  Nothing to review yet. Talk an idea through with JARVIS and
+                  the design he writes down will appear here.
+                </div>
+              </div>
+            </section>
+            <section class="panel panel--flush specs-detail">
+              <header class="panel-head">
+                <h2 class="panel-title">Document</h2>
+              </header>
+              <div class="panel-body specs-doc">
+                <div class="empty">
+                  Pick a project on the left to read what JARVIS wrote.
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 13 · USAGE ═════════════════════════════════════════════════════ -->
+    <section class="pv-section">
+      <div class="pv-head">
+        <span class="pv-num">13</span>
+        <h2 class="pv-title">Usage — what is left, and who spent it</h2>
+      </div>
+      <p class="pv-note">
+        Three independent sources feed this view: the subscription's windows
+        (from the CLI's <code>rate_limit_event</code>, which only arrives
+        while a turn is running), the transcript scan
+        (<code>usage_scan.py</code>), and JARVIS's own run log. Each can be
+        absent on its own, so each panel says what it does not know in words
+        rather than borrowing another's confidence. <strong>The unit is not
+        dollars</strong> — JARVIS runs on the subscription and bills nobody,
+        so a cost figure is a price list for calls that never happened. The
+        one on the page is a footnote in the last panel, labelled as an API
+        equivalent.
+      </p>
+
+      <!-- STATE 1 — nothing measured. The state a fresh JARVIS is in, and
+           the one an empty gauge would lie about. -->
+      <div class="pv-cell">
+        <span class="pv-cap">State 1 · nothing measured yet</span>
+        <section class="panel tone-accent">
+          <header class="panel-head">
+            <h2 class="panel-title">Subscription</h2>
+          </header>
+          <div class="panel-body">
+            <div class="usage-note">
+              <span class="pill tone-warn">no reading</span>
+              <span>
+                JARVIS only learns where the windows stand while a turn is
+                running, and none has run since he started. Nothing has been
+                measured — which is not the same as nothing being used.
+              </span>
+            </div>
+            <div class="usage-window-grid">
+              <div class="usage-window">
+                <div class="bar bar--unknown tone-dim" role="progressbar"
+                     aria-valuemin="0" aria-valuemax="100"
+                     aria-valuetext="not measured">
+                  <div class="bar-head">
+                    <span class="bar-label">5-hour session</span>
+                    <span class="bar-value">not measured</span>
+                  </div>
+                  <div class="bar-track"><div class="bar-fill"></div></div>
+                </div>
+                <div class="usage-when">no reading yet</div>
+              </div>
+              <div class="usage-window">
+                <div class="bar bar--unknown tone-dim" role="progressbar"
+                     aria-valuemin="0" aria-valuemax="100"
+                     aria-valuetext="not measured">
+                  <div class="bar-head">
+                    <span class="bar-label">7-day week</span>
+                    <span class="bar-value">not measured</span>
+                  </div>
+                  <div class="bar-track"><div class="bar-fill"></div></div>
+                </div>
+                <div class="usage-when">no reading yet</div>
+              </div>
+            </div>
+            <div class="usage-contains">
+              <span class="usage-contains-label">What the CLI reports</span>
+              <span>
+                2 windows: 5-hour session and 7-day week. There is no separate
+                per-model window — no Fable limit, no Opus limit — in the
+                rate-limit payload. What each model costs is under By Model
+                below, measured from the transcripts.
+              </span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- STATE 2 — measured. -->
+      <div class="pv-cell">
+        <span class="pv-cap">State 2 · measured</span>
+        <section class="panel tone-accent">
+          <header class="panel-head">
+            <h2 class="panel-title">Subscription</h2>
+          </header>
+          <div class="panel-body">
+            <div class="usage-note"><span>Measured 3m ago.</span></div>
+            <div class="usage-window-grid">
+              <div class="usage-window">
+                <div class="bar tone-accent" role="progressbar"
+                     aria-valuemin="0" aria-valuemax="100" aria-valuenow="62">
+                  <div class="bar-head">
+                    <span class="bar-label">5-hour session</span>
+                    <span class="bar-value">62%</span>
+                  </div>
+                  <div class="bar-track">
+                    <div class="bar-fill" style="--pct: 62%"></div>
+                  </div>
+                </div>
+                <div class="usage-when">resets 6:00pm</div>
+              </div>
+              <div class="usage-window">
+                <div class="bar tone-warn" role="progressbar"
+                     aria-valuemin="0" aria-valuemax="100" aria-valuenow="84">
+                  <div class="bar-head">
+                    <span class="bar-label">7-day week</span>
+                    <span class="bar-value">84%</span>
+                  </div>
+                  <div class="bar-track">
+                    <div class="bar-fill" style="--pct: 84%"></div>
+                  </div>
+                </div>
+                <div class="usage-when">resets Sun 8:00am</div>
+              </div>
+            </div>
+            <div class="usage-contains">
+              <span class="usage-contains-label">What the CLI reports</span>
+              <span>
+                2 windows: 5-hour session and 7-day week. There is no separate
+                per-model window — no Fable limit, no Opus limit — in the
+                rate-limit payload.
+              </span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- OVERALL, with the sparkline. -->
+      <div class="pv-cell">
+        <span class="pv-cap">Overall · figures, breakdown, daily history</span>
+        <section class="panel">
+          <header class="panel-head">
+            <h2 class="panel-title">Overall</h2>
+          </header>
+          <div class="panel-body">
+            <div class="usage-figures">
+              <div class="readout readout--lg">
+                <div class="readout-value">4.2B</div>
+                <div class="readout-label">Tokens, all time</div>
+              </div>
+              <div class="readout">
+                <div class="readout-value">1.3B</div>
+                <div class="readout-label">Today</div>
+              </div>
+              <div class="readout">
+                <div class="readout-value">49M</div>
+                <div class="readout-label">Output</div>
+              </div>
+              <div class="readout">
+                <div class="readout-value">318</div>
+                <div class="readout-label">Conversations</div>
+              </div>
+              <div class="readout">
+                <div class="readout-value">12</div>
+                <div class="readout-label">Projects</div>
+              </div>
+            </div>
+            <div class="usage-split">
+              <div class="usage-split-cell">
+                <span class="usage-split-value">2.7M</span>
+                <span class="usage-split-label">fresh input</span>
+              </div>
+              <div class="usage-split-cell">
+                <span class="usage-split-value">31M</span>
+                <span class="usage-split-label">output</span>
+              </div>
+              <div class="usage-split-cell">
+                <span class="usage-split-value">3.1B</span>
+                <span class="usage-split-label">cache read</span>
+              </div>
+              <div class="usage-split-cell">
+                <span class="usage-split-value">210M</span>
+                <span class="usage-split-label">cache written</span>
+              </div>
+            </div>
+            <div class="usage-note">
+              Read from 604 transcripts across 2 config roots, just now.
+              Counted per message from the CLI's own usage blocks; the two
+              roots are hardlinked on this machine, so each file is counted
+              once.
+            </div>
+            <div class="usage-spark">
+              <!-- Columns, not a line: these are discrete days, and a line
+                   between two of them asserts values nobody measured. -->
+              <div class="spark tone-accent">
+                <div class="spark-head">
+                  <span class="spark-label">Daily tokens</span>
+                  <span class="spark-range">17 Aug — 3 Sep</span>
+                </div>
+                <svg class="spark-svg" viewBox="0 0 72 44" height="44"
+                     preserveAspectRatio="none" role="img" focusable="false"
+                     aria-label="Daily tokens: 18 days to 3 Sep, highest 2.9B on 1 Sep">
+                  <rect class="spark-bar" x="0"  y="30" width="3" height="14"></rect>
+                  <rect class="spark-bar" x="4"  y="26" width="3" height="18"></rect>
+                  <rect class="spark-bar" x="8"  y="35" width="3" height="9"></rect>
+                  <rect class="spark-bar is-gap" x="12" y="43" width="3" height="1"></rect>
+                  <rect class="spark-bar" x="16" y="22" width="3" height="22"></rect>
+                  <rect class="spark-bar" x="20" y="28" width="3" height="16"></rect>
+                  <rect class="spark-bar" x="24" y="18" width="3" height="26"></rect>
+                  <rect class="spark-bar" x="28" y="33" width="3" height="11"></rect>
+                  <rect class="spark-bar is-gap" x="32" y="43" width="3" height="1"></rect>
+                  <rect class="spark-bar" x="36" y="24" width="3" height="20"></rect>
+                  <rect class="spark-bar" x="40" y="14" width="3" height="30"></rect>
+                  <rect class="spark-bar" x="44" y="20" width="3" height="24"></rect>
+                  <rect class="spark-bar" x="48" y="31" width="3" height="13"></rect>
+                  <rect class="spark-bar" x="52" y="9"  width="3" height="35"></rect>
+                  <rect class="spark-bar" x="56" y="27" width="3" height="17"></rect>
+                  <rect class="spark-bar" x="60" y="2"  width="3" height="42"></rect>
+                  <rect class="spark-bar" x="64" y="12" width="3" height="32"></rect>
+                  <rect class="spark-bar" x="68" y="19" width="3" height="25"></rect>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- SPARKLINE, with no history. Hatched, exactly like bar--unknown:
+           an empty chart and a chart of zeroes are the same picture. -->
+      <div class="pv-cell">
+        <span class="pv-cap">Sparkline · no history</span>
+        <div class="spark spark--empty tone-accent" style="max-width: 420px">
+          <div class="spark-head">
+            <span class="spark-label">Daily tokens</span>
+            <span class="spark-range">no history</span>
+          </div>
+          <svg class="spark-svg" preserveAspectRatio="none" role="img"
+               focusable="false"></svg>
+        </div>
+      </div>
+
+      <!-- BY MODEL — where Fable's real share shows up, since the limit
+           payload has no window for it. -->
+      <div class="pv-cell">
+        <span class="pv-cap">By model · measured share</span>
+        <section class="panel">
+          <header class="panel-head">
+            <h2 class="panel-title">By Model</h2>
+            <span class="panel-meta">5</span>
+          </header>
+          <div class="panel-body">
+            <div class="stack">
+              <div class="row tone-accent">
+                <span class="row-lead"></span>
+                <span class="row-main"><span class="row-title">claude-opus-5</span></span>
+                <span class="row-trail">
+                  <span class="row-meta is-strong" style="--w: 78px">2.1B tok</span>
+                  <span class="row-meta" style="--w: 44px">100%</span>
+                </span>
+                <div class="row-body">
+                  <div class="bar bar--slim tone-accent">
+                    <div class="bar-track"><div class="bar-fill" style="--pct: 100%"></div></div>
+                  </div>
+                </div>
+              </div>
+              <div class="row tone-accent">
+                <span class="row-lead"></span>
+                <span class="row-main"><span class="row-title">claude-fable-5</span></span>
+                <span class="row-trail">
+                  <span class="row-meta is-strong" style="--w: 78px">1.4B tok</span>
+                  <span class="row-meta" style="--w: 44px">84%</span>
+                </span>
+                <div class="row-body">
+                  <div class="bar bar--slim tone-accent">
+                    <div class="bar-track"><div class="bar-fill" style="--pct: 84%"></div></div>
+                  </div>
+                </div>
+              </div>
+              <div class="row tone-accent">
+                <span class="row-lead"></span>
+                <span class="row-main"><span class="row-title">claude-sonnet-5</span></span>
+                <span class="row-trail">
+                  <span class="row-meta is-strong" style="--w: 78px">0.7B tok</span>
+                  <span class="row-meta" style="--w: 44px">51%</span>
+                </span>
+                <div class="row-body">
+                  <div class="bar bar--slim tone-accent">
+                    <div class="bar-track"><div class="bar-fill" style="--pct: 51%"></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- BY CONVERSATION — the piece this whole tab exists for. -->
+      <div class="pv-cell">
+        <span class="pv-cap">By conversation · largest first</span>
+        <section class="panel">
+          <header class="panel-head">
+            <h2 class="panel-title">By Conversation</h2>
+            <span class="panel-meta">318 in 12 projects</span>
+          </header>
+          <div class="panel-body">
+            <div class="usage-note">
+              Largest first. A conversation's own spend and its subagents' are
+              counted together here and split in the columns.
+            </div>
+            <div class="stack">
+              <!-- Working right now: accent rail, and the live agent named. -->
+              <div class="row tone-accent">
+                <span class="row-lead"></span>
+                <span class="row-main">
+                  <span class="row-title">jarvis</span>
+                  <span class="row-sub">fa79dc32</span>
+                </span>
+                <span class="row-trail">
+                  <span class="pill tone-accent">3 agents active</span>
+                  <span class="row-meta is-strong" style="--w: 76px">2.3B tok</span>
+                  <span class="row-meta" style="--w: 72px">1.1B sub</span>
+                  <span class="row-meta" style="--w: 84px">241k ctx</span>
+                  <span class="row-meta" style="--w: 66px">9:45pm</span>
+                </span>
+                <div class="row-body">
+                  <div class="bar bar--slim tone-accent">
+                    <div class="bar-track"><div class="bar-fill" style="--pct: 56%"></div></div>
+                  </div>
+                </div>
+                <div class="row-note">└ Update dashboard-preview.html · 34M tok</div>
+              </div>
+              <!-- Quiet: idle rail, agents dispatched but none running. -->
+              <div class="row tone-idle">
+                <span class="row-lead"></span>
+                <span class="row-main">
+                  <span class="row-title">stormlight</span>
+                  <span class="row-sub">de705404</span>
+                </span>
+                <span class="row-trail">
+                  <span class="pill pill--ghost tone-idle">209 dispatched</span>
+                  <span class="row-meta is-strong" style="--w: 76px">1.4B tok</span>
+                  <span class="row-meta" style="--w: 72px">2.6B sub</span>
+                  <span class="row-meta" style="--w: 84px">259k ctx</span>
+                  <span class="row-meta" style="--w: 66px">5:13pm</span>
+                </span>
+                <div class="row-body">
+                  <div class="bar bar--slim tone-idle">
+                    <div class="bar-track"><div class="bar-fill" style="--pct: 100%"></div></div>
+                  </div>
+                </div>
+              </div>
+              <!-- No assistant turn was ever recorded: the context is
+                   UNKNOWN, and says so. It is not 0. -->
+              <div class="row tone-idle">
+                <span class="row-lead"></span>
+                <span class="row-main">
+                  <span class="row-title">chitauri</span>
+                  <span class="row-sub">b6219390</span>
+                </span>
+                <span class="row-trail">
+                  <span class="row-meta is-strong" style="--w: 76px">0 tok</span>
+                  <span class="row-meta" style="--w: 72px">—</span>
+                  <span class="row-meta" style="--w: 84px">ctx unknown</span>
+                  <span class="row-meta" style="--w: 66px">Wed 2:31am</span>
+                </span>
+                <div class="row-body">
+                  <div class="bar bar--slim tone-idle">
+                    <div class="bar-track"><div class="bar-fill" style="--pct: 0%"></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="usage-more">
+              907 smaller conversations not listed. The totals above count
+              every one of them.
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- BACKGROUND & SUBAGENTS, both states. -->
+      <div class="pv-cols">
+        <div class="pv-cell">
+          <span class="pv-cap">Background · agents active</span>
+          <section class="panel">
+            <header class="panel-head">
+              <h2 class="panel-title">Background &amp; Subagents</h2>
+              <span class="panel-meta">2</span>
+            </header>
+            <div class="panel-body">
+              <div class="usage-note">
+                “Active” here means a subagent's transcript was written in the
+                last 90 seconds. That is a file's age, not a live process —
+                there is no process to ask. The name and type come from the
+                <code>agent-&lt;id&gt;.meta.json</code> sidecar the CLI writes
+                at spawn; an agent without one shows the brief it was given
+                instead, and no type at all rather than a guessed one.
+              </div>
+              <div class="stack">
+                <!-- With a sidecar: its own one-line name, and its type. -->
+                <div class="row tone-accent">
+                  <span class="row-lead">
+                    <span class="dot dot--live tone-accent"></span>
+                  </span>
+                  <span class="row-main">
+                    <span class="row-title">Usage and subagents view</span>
+                    <span class="row-sub">jarvis</span>
+                  </span>
+                  <span class="row-trail">
+                    <span class="pill pill--ghost tone-idle">general-purpose</span>
+                    <span class="row-meta is-strong" style="--w: 78px">62M tok</span>
+                    <span class="row-meta" style="--w: 58px">278 turns</span>
+                    <span class="row-meta" style="--w: 62px">9:57pm</span>
+                  </span>
+                  <div class="row-note">└ Work in the runs-dashboard worktree. Tests: pytest tests/ …</div>
+                </div>
+                <!-- Dispatched BY another agent: only ever shown when the
+                     sidecar said so. depth 0 means no sidecar, which is
+                     unknown depth, not top level. -->
+                <div class="row tone-accent">
+                  <span class="row-lead">
+                    <span class="dot dot--live tone-accent"></span>
+                  </span>
+                  <span class="row-main">
+                    <span class="row-title">Map DB submit-approve write path</span>
+                    <span class="row-sub">stormlight</span>
+                  </span>
+                  <span class="row-trail">
+                    <span class="pill pill--ghost tone-warn">nested ×2</span>
+                    <span class="pill pill--ghost tone-idle">Explore</span>
+                    <span class="row-meta is-strong" style="--w: 78px">2.2M tok</span>
+                    <span class="row-meta" style="--w: 58px">18 turns</span>
+                    <span class="row-meta" style="--w: 62px">9:57pm</span>
+                  </span>
+                </div>
+                <!-- No sidecar (an older transcript): the brief it was
+                     launched with, and NO type — not a guessed one. -->
+                <div class="row tone-accent">
+                  <span class="row-lead">
+                    <span class="dot dot--live tone-accent"></span>
+                  </span>
+                  <span class="row-main">
+                    <span class="row-title">Fix the failing invoice test</span>
+                    <span class="row-sub">chitauri</span>
+                  </span>
+                  <span class="row-trail">
+                    <span class="pill pill--ghost tone-idle">JARVIS's own</span>
+                    <span class="row-meta is-strong" style="--w: 78px">2.1M tok</span>
+                    <span class="row-meta" style="--w: 58px">12 turns</span>
+                    <span class="row-meta" style="--w: 62px">9:46pm</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="pv-cell">
+          <span class="pv-cap">Background · nothing running</span>
+          <section class="panel">
+            <header class="panel-head">
+              <h2 class="panel-title">Background &amp; Subagents</h2>
+            </header>
+            <div class="panel-body">
+              <div class="usage-note">
+                “Active” here means a subagent's transcript was written in the
+                last 90 seconds. A subagent that finished a minute ago has
+                already dropped off this list.
+              </div>
+              <div class="empty empty--sm">
+                Nothing dispatched in the last 90 seconds.
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- JARVIS'S OWN WORK — quiet panel, and the page's only dollar. -->
+      <div class="pv-cell">
+        <span class="pv-cap">JARVIS's own work · kept out of the figures above</span>
+        <section class="panel panel--quiet">
+          <header class="panel-head">
+            <h2 class="panel-title">JARVIS's Own Work</h2>
+          </header>
+          <div class="panel-body">
+            <div class="usage-note">
+              JARVIS's brain and the one-shot runs he spawns register as
+              Claude Code sessions like any other, and were once counted as
+              the user's conversations — 12 became 16. They are kept here so
+              they are visible without being mixed into the figures above.
+            </div>
+            <div class="usage-figures">
+              <div class="readout">
+                <div class="readout-value">184M</div>
+                <div class="readout-label">Tokens</div>
+              </div>
+              <div class="readout">
+                <div class="readout-value">7</div>
+                <div class="readout-label">Sessions</div>
+              </div>
+              <div class="readout">
+                <div class="readout-value">4</div>
+                <div class="readout-label">Runs today</div>
+              </div>
+              <div class="readout tone-ok">
+                <div class="readout-value">3</div>
+                <div class="readout-label">Succeeded</div>
+              </div>
+              <div class="readout tone-bad">
+                <div class="readout-value">1</div>
+                <div class="readout-label">Failed</div>
+              </div>
+            </div>
+            <div class="usage-footnote">
+              The CLI priced today's runs at $2.14 — that is what these tokens
+              WOULD have cost through the API. Nothing was billed: JARVIS runs
+              on the subscription and the brain scrubs every ANTHROPIC_*
+              variable so the CLI cannot reach a key. Treat it as a sense of
+              scale, not a bill.
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- STATE 3 — the scan itself is unavailable. Distinct from
+           "measured nothing", and the distinction is the whole point. -->
+      <div class="pv-cols">
+        <div class="pv-cell">
+          <span class="pv-cap">State 3 · no transcripts on disk</span>
+          <section class="panel">
+            <header class="panel-head">
+              <h2 class="panel-title">Overall</h2>
+            </header>
+            <div class="panel-body">
+              <div class="empty">
+                No Claude Code transcripts found on this machine, so there is
+                nothing to measure yet — not zero usage.
+              </div>
+            </div>
+          </section>
+        </div>
+        <div class="pv-cell">
+          <span class="pv-cap">State 4 · the scan failed</span>
+          <section class="panel">
+            <header class="panel-head">
+              <h2 class="panel-title">Overall</h2>
+            </header>
+            <div class="panel-body">
+              <div class="empty">
+                Cannot read the transcripts. Nothing here is a measurement.
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <p class="pv-foot">
+      System fonts only, no network requests, no dependencies. Every colour,
+      size and duration above resolves to a token in
+      <code>src/dashboard/theme/tokens.css</code> — change the look there and
+      it changes everywhere. Motion is limited to state change: the breathing
+      dot, the bar sweep, and a one-shot flash when a value or a record
+      updates. With <code>prefers-reduced-motion</code> set, all of it stops
+      and nothing becomes ambiguous.
+    </p>
+
+    <!-- A fixed banner, exactly as the app renders it. -->
+    <div class="banner tone-warn">
+      <span class="dot dot--live tone-warn"></span>Reconnecting to JARVIS…
+    </div>
+  </body>
+</html>
