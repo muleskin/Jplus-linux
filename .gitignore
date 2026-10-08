@@ -2,7 +2,9 @@ bin/
 obj/
 publish/
 frontend/node_modules/
-frontend/dist/
+# The built frontend IS committed, so a clone builds with only the .NET SDK (no Node).
+dist/
+!frontend/dist/
 data/
 .env
 cert.pem

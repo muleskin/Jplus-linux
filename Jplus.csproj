@@ -41,8 +41,14 @@
     <None Remove="frontend\**" />
   </ItemGroup>
 
-  <!-- Build the frontend when dist is missing, so a clean clone still embeds it. -->
+  <!-- Build the frontend when dist is missing. frontend/dist is committed, so this only
+       runs after it is deleted (e.g. to rebuild a changed frontend), and that needs npm. -->
   <Target Name="BuildFrontend" BeforeTargets="PrepareForBuild" Condition="!Exists('frontend\dist\index.html')">
+    <Exec Command="npm --version" ContinueOnError="true" IgnoreExitCode="true" StandardOutputImportance="low">
+      <Output TaskParameter="ExitCode" PropertyName="_NpmExit" />
+    </Exec>
+    <Error Condition="'$(_NpmExit)' != '0'"
+           Text="frontend/dist is missing and npm was not found to rebuild it. Either restore it (git checkout -- frontend/dist) or install Node.js + npm (e.g. sudo apt install nodejs npm) and build again." />
     <Exec Command="npm ci --no-audit --no-fund" WorkingDirectory="frontend" Condition="!Exists('frontend\node_modules')" />
     <Exec Command="npm run build" WorkingDirectory="frontend" />
     <ItemGroup>
