@@ -72,17 +72,16 @@ public static class Py
 
     /// <summary>
     /// True when there is no desktop to reach. Windows: a service in session 0.
-    /// Linux: no X11 / Wayland display in our environment — a systemd system
-    /// service, an SSH login, a headless box. (A `systemctl --user` service
-    /// started from a graphical login inherits DISPLAY / WAYLAND_DISPLAY once
-    /// the session has run `systemctl --user import-environment`.)
+    /// Linux: neither an X11 display in our environment nor a Wayland
+    /// compositor of our own (see WaylandDisplay) — a systemd system service,
+    /// a headless box, nobody logged in to the desktop. Re-evaluated on every
+    /// call on Linux: a user service can start before the desktop does.
     /// </summary>
-    public static bool IsServiceSession => _isServiceSession.Value;
+    public static bool IsServiceSession => IsWindows
+        ? _isWindowsService.Value
+        : string.IsNullOrEmpty(Getenv("DISPLAY")) && WaylandDisplay() is null;
 
-    private static readonly Lazy<bool> _isServiceSession = new(() =>
-        IsWindows
-            ? Process.GetCurrentProcess().SessionId == 0
-            : string.IsNullOrEmpty(Getenv("DISPLAY")) && string.IsNullOrEmpty(Getenv("WAYLAND_DISPLAY")));
+    private static readonly Lazy<bool> _isWindowsService = new(() => Process.GetCurrentProcess().SessionId == 0);
 
     /// <summary>Refusal text for desktop-only features when running as a service.</summary>
     public static readonly string NoDesktopReason = IsWindows
@@ -90,7 +89,88 @@ public static class Py
         : "I am running without a desktop session (no X11 or Wayland display), so I have no desktop to reach from here.";
 
     /// <summary>True on a Wayland session (X11-only tools such as xdotool cannot see its windows).</summary>
-    public static bool IsWayland => !IsWindows && !string.IsNullOrEmpty(Getenv("WAYLAND_DISPLAY"));
+    public static bool IsWayland => !IsWindows && WaylandDisplay() is not null;
+
+    private static readonly object WaylandGate = new();
+    private static double _waylandCheckedAt = double.NegativeInfinity;
+    private static string? _waylandFound;
+    private static string? _waylandExported;   // the value WE put in WAYLAND_DISPLAY, if any
+
+    /// <summary>
+    /// The Wayland display to talk to, or null. WAYLAND_DISPLAY when set;
+    /// otherwise this user's own compositor socket, found in the runtime dir.
+    ///
+    /// Started over SSH, or as a `systemctl --user` service before the desktop
+    /// exported its environment, JARVIS has no WAYLAND_DISPLAY although the
+    /// owner's desktop is right there — and then grim, the browser, the
+    /// terminal and notify-send all fail. So the socket is looked up directly:
+    /// `$XDG_RUNTIME_DIR` (else `/run/user/&lt;euid&gt;`) must be a directory we own,
+    /// closed to "other" (and to any group but our own), and `wayland-N` a
+    /// socket we own — not a symlink, not a plain file. Only ever
+    /// our own session, never another user's. A found display is exported to
+    /// our environment (WAYLAND_DISPLAY, and XDG_RUNTIME_DIR if unset) so every
+    /// child inherits it; if that socket later disappears (logout) the export
+    /// is withdrawn and the lookup runs again.
+    /// </summary>
+    public static string? WaylandDisplay()
+    {
+        if (IsWindows) return null;
+        var env = Getenv("WAYLAND_DISPLAY");
+        lock (WaylandGate)
+        {
+            if (!string.IsNullOrEmpty(env))
+            {
+                // A value someone else set is theirs to trust. Our own export is
+                // withdrawn when the compositor it pointed at has gone.
+                if (env != _waylandExported || OwnWaylandSocket(RuntimeDir(), env)) return env;
+                Environment.SetEnvironmentVariable("WAYLAND_DISPLAY", null);
+                _waylandExported = null;
+                _waylandCheckedAt = double.NegativeInfinity;
+            }
+            var now = Monotonic();
+            if (now - _waylandCheckedAt < 5) return _waylandFound;
+            _waylandCheckedAt = now;
+            _waylandFound = FindOwnWaylandSocket();
+            if (_waylandFound is not null)
+            {
+                Environment.SetEnvironmentVariable("WAYLAND_DISPLAY", _waylandFound);
+                if (string.IsNullOrEmpty(Getenv("XDG_RUNTIME_DIR")))
+                    Environment.SetEnvironmentVariable("XDG_RUNTIME_DIR", RuntimeDir());
+                _waylandExported = _waylandFound;
+                Log("jarvis").LogInformation("no WAYLAND_DISPLAY in the environment; using this user's compositor socket {Display}",
+                    Path.Combine(RuntimeDir(), _waylandFound));
+            }
+            return _waylandFound;
+        }
+    }
+
+    private static string RuntimeDir() =>
+        Getenv("XDG_RUNTIME_DIR") is { Length: > 0 } d ? d : $"/run/user/{Posix.Geteuid()}";
+
+    private static readonly System.Text.RegularExpressions.Regex WaylandSocketName =
+        new(@"^wayland-[0-9]+$", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+    private static string? FindOwnWaylandSocket()
+    {
+        try
+        {
+            var dir = RuntimeDir();
+            var me = Posix.Geteuid();
+            // Ours, nothing for "other", and group access only for our own primary
+            // group: systemd makes this 0700, Raspberry Pi OS 0770 jedd:jedd (+ACL).
+            if (Posix.LStat(dir) is not { IsDir: true } d || d.Uid != me || (d.Mode & 0x7) != 0) return null;
+            if ((d.Mode & 0x38) != 0 && d.Gid != Posix.Getegid()) return null;
+            return Directory.EnumerateFileSystemEntries(dir, "wayland-*")
+                .Select(Path.GetFileName)
+                .Where(n => n is not null && WaylandSocketName.IsMatch(n))
+                .OrderBy(n => int.Parse(n!.AsSpan(8), System.Globalization.CultureInfo.InvariantCulture))
+                .FirstOrDefault(n => OwnWaylandSocket(dir, n!));
+        }
+        catch { return null; }
+    }
+
+    private static bool OwnWaylandSocket(string dir, string name) =>
+        WaylandSocketName.IsMatch(name) && Posix.LStat(Path.Combine(dir, name)) is { IsSocket: true } s && s.Uid == Posix.Geteuid();
 
     /// <summary>
     /// How file paths compare: case-insensitively on Windows, exactly on Linux,

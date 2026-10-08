@@ -23,7 +23,7 @@ public static class Posix
     public static int ONoFollow => RuntimeInformation.ProcessArchitecture is Architecture.Arm64 or Architecture.Arm
         ? 0x8000 : 0x20000;
 
-    public const uint SIfMt = 0xF000, SIfReg = 0x8000, SIfDir = 0x4000, SIfLnk = 0xA000;
+    public const uint SIfMt = 0xF000, SIfReg = 0x8000, SIfDir = 0x4000, SIfLnk = 0xA000, SIfSock = 0xC000;
 
     public const int SigKill = 9, SigTerm = 15;
 
@@ -38,6 +38,9 @@ public static class Posix
     [DllImport("libc", SetLastError = true, EntryPoint = "mkdir")]
     public static extern int Mkdir(string path, uint mode);
 
+    [DllImport("libc", EntryPoint = "getegid")]
+    public static extern uint Getegid();
+
     [DllImport("libc", EntryPoint = "geteuid")]
     public static extern uint Geteuid();
 
@@ -45,11 +48,12 @@ public static class Posix
     public static extern int Kill(int pid, int sig);
 
     /// <summary>What `os.stat` / `os.lstat` / `os.fstat` gave the Python.</summary>
-    public readonly record struct Stat(ulong Dev, ulong Ino, uint Uid, uint Mode, long Size, double Mtime)
+    public readonly record struct Stat(ulong Dev, ulong Ino, uint Uid, uint Mode, long Size, double Mtime, uint Gid = 0)
     {
         public bool IsRegular => (Mode & SIfMt) == SIfReg;
         public bool IsDir => (Mode & SIfMt) == SIfDir;
         public bool IsLink => (Mode & SIfMt) == SIfLnk;
+        public bool IsSocket => (Mode & SIfMt) == SIfSock;
     }
 
     private static Stat? Statx(int dirfd, string path, int flags)
@@ -65,6 +69,7 @@ public static class Posix
         }
         var s = buf.AsSpan();
         uint uid = BinaryPrimitives.ReadUInt32LittleEndian(s[20..]);
+        uint gid = BinaryPrimitives.ReadUInt32LittleEndian(s[24..]);
         uint mode = BinaryPrimitives.ReadUInt16LittleEndian(s[28..]);
         ulong ino = BinaryPrimitives.ReadUInt64LittleEndian(s[32..]);
         long size = (long)BinaryPrimitives.ReadUInt64LittleEndian(s[40..]);
@@ -72,7 +77,7 @@ public static class Posix
         uint mNsec = BinaryPrimitives.ReadUInt32LittleEndian(s[120..]);
         ulong devMajor = BinaryPrimitives.ReadUInt32LittleEndian(s[136..]);
         ulong devMinor = BinaryPrimitives.ReadUInt32LittleEndian(s[140..]);
-        return new Stat((devMajor << 32) | devMinor, ino, uid, mode, size, mSec + mNsec / 1e9);
+        return new Stat((devMajor << 32) | devMinor, ino, uid, mode, size, mSec + mNsec / 1e9, gid);
     }
 
     /// <summary>`os.stat` (follows links); null if it cannot be stat'd.</summary>

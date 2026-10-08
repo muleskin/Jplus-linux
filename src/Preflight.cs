@@ -502,7 +502,7 @@ public static partial class Preflight
             return new Check(
                 Name: "desktop_session",
                 Status: StatusWarn,
-                Message: "Running without a desktop session (no DISPLAY or WAYLAND_DISPLAY): opening windows, " +
+                Message: "Running without a desktop session (no DISPLAY, and no Wayland compositor of this user's): opening windows, " +
                          "screenshots, the window list and notifications are unavailable. Keystrokes into tmux " +
                          "sessions still work.",
                 Remedy: "Run Jplus as a `systemctl --user` service started from your graphical login " +
