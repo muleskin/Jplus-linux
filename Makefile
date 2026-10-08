@@ -66,7 +66,7 @@ publish:
 package: publish
 	rm -rf dist/jplus-$(RID)
 	mkdir -p dist/jplus-$(RID)
-	cp dist/$(RID)/Jplus README.md LICENSE dist/jplus-$(RID)/
+	cp dist/$(RID)/Jplus README.md dist/jplus-$(RID)/
 	cp Resources/env.example dist/jplus-$(RID)/env.example
 	tar -C dist -czf dist/jplus-$(RID).tar.gz jplus-$(RID)
 	@echo "Built dist/jplus-$(RID).tar.gz"

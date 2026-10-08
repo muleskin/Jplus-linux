@@ -26,7 +26,7 @@ architecture, override with `RID=linux-arm64`):
 
 ```bash
 make publish      # self-contained single-file binary -> dist/<rid>/Jplus
-make package      # + dist/jplus-<rid>.tar.gz (binary, README, LICENSE, env.example)
+make package      # + dist/jplus-<rid>.tar.gz (binary, README, env.example)
 make install      # per-user: ~/.local/lib/jplus/Jplus, on PATH as `jplus`; .env seeded from the template
 make service      # install, then register and start the systemd user unit
 make uninstall    # remove the unit and the binary (data/ and .env are kept)
