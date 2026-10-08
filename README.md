@@ -12,6 +12,28 @@ conventions: [PORTING.md](PORTING.md).
 
 ## Build
 
+The only prerequisite is the **.NET 10 SDK** (plus Node/npm the first time, to build the
+frontend). If you don't have it, the bundled `dotnet-install.sh` installs it to
+`~/.dotnet` without root:
+
+```bash
+./dotnet-install.sh --channel 10.0
+export PATH="$HOME/.dotnet:$PATH"     # add to ~/.bashrc to persist
+```
+
+A `Makefile` wraps the common tasks (`make help` lists them; the RID follows the host
+architecture, override with `RID=linux-arm64`):
+
+```bash
+make publish      # self-contained single-file binary -> dist/<rid>/Jplus
+make package      # + dist/jplus-<rid>.tar.gz (binary, README, LICENSE, env.example)
+make install      # per-user: ~/.local/lib/jplus/Jplus, on PATH as `jplus`; .env seeded from the template
+make service      # install, then register and start the systemd user unit
+make uninstall    # remove the unit and the binary (data/ and .env are kept)
+```
+
+Without make:
+
 ```bash
 dotnet publish -c Release -r linux-x64 -o publish/linux-x64
 ```
