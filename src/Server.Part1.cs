@@ -2000,6 +2000,7 @@ public static partial class Server
     {
         WebAuth.AdoptBind(bind);
         Log.LogInformation($"serving on {bind.Scheme}://{bind.Host}:{bind.Port} ({bind.Source})");
+        Passcode.LogStatus();
         var lines = WebAuth.ExposureWarning(bind);
         if (lines is null || lines.Count == 0) return;
         Log.LogWarning(string.Join(" ", lines.Select(l => l.TrimStart('!', ' ').Trim())));

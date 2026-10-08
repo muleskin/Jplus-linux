@@ -243,9 +243,10 @@ public static partial class WebAuth
                 "  refused. Set JARVIS_BIND_HOST and JARVIS_PORT to the address",
                 "  you are actually serving from.",
             ];
-        if (IsLoopback(bind.Host)) return [];
+        if (IsLoopback(bind.Host) || Passcode.Enabled) return [];
         return
         [
+            "! No JARVIS_PASSCODE is set. Set one to require sign-in.",
             $"! Bound to {bind.Host}, not loopback. Anything that can",
             "  reach this port can read every conversation on this",
             "  machine; only the tool token stands in front of the",

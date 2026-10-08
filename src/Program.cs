@@ -97,6 +97,7 @@ public static class Program
         // `.env` is read before anything else looks at the environment, exactly
         // like the module-level loader at the top of server.py.
         Server.BootLoadEnv();
+        Passcode.Init();
 
         var cert = noSsl ? null : LoadOrCreateCertificate();
         var scheme = cert is null ? "http" : "https";
@@ -161,6 +162,7 @@ public static class Program
 
         app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(20) });
         app.UseMiddleware<WebAuth.OriginGuard>();
+        app.UseMiddleware<Passcode.Gate>();
 
         Server.MapRoutes1(app);
         Server.MapRoutes2(app);
