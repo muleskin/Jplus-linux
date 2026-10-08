@@ -65,7 +65,11 @@ public static partial class WebAuth
     //       frame-ancestors (which also covers <object>/<embed>).
     //   nosniff — JSON here contains attacker-influenced text; a browser must
     //       not decide it "looks like" HTML and run it.
-    //   Referrer-Policy — the dashboard's URLs carry run ids and project paths.
+    //   Referrer-Policy — the dashboard's URLs carry run ids and project paths,
+    //       so no other site is ever sent a Referer. `same-origin`, NOT
+    //       `no-referrer`: under no-referrer a browser serializes the Origin
+    //       of a plain <form method=post> (the passcode sign-in) as "null",
+    //       and the Origin check below then refuses the owner's own login.
     //
     // Deliberately NOT a full CSP: it would fail closed and silently the first
     // time somebody inlined a script. frame-ancestors does the security work.
@@ -74,7 +78,7 @@ public static partial class WebAuth
         ("x-frame-options", "DENY"),
         ("content-security-policy", "frame-ancestors 'none'"),
         ("x-content-type-options", "nosniff"),
-        ("referrer-policy", "no-referrer"),
+        ("referrer-policy", "same-origin"),
     ];
 
     /// <summary>
