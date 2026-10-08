@@ -183,9 +183,17 @@ public static class Passcode
 
         public async Task InvokeAsync(HttpContext ctx)
         {
-            if (!Enabled) { await _next(ctx); return; }
             var path = ctx.Request.Path.Value ?? "/";
             var method = (ctx.Request.Method ?? "").ToUpperInvariant();
+            // Lets the dashboard decide whether to show "Sign out". Says no more
+            // than the /login redirect already does.
+            if (path == "/api/auth" && method is "GET" or "HEAD")
+            {
+                ctx.Response.ContentType = "application/json";
+                await ctx.Response.WriteAsync(Py.Dumps(new Dictionary<string, object?> { ["enabled"] = Enabled }));
+                return;
+            }
+            if (!Enabled) { await _next(ctx); return; }
 
             if (path == "/login")
             {

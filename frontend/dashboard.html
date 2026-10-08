@@ -19,6 +19,10 @@
           <span id="link-state-text">Link OK</span>
         </div>
         <div id="stats" class="shell-stats"></div>
+        <!-- Only shown when JARVIS_PASSCODE is set; a plain form so it needs no script. -->
+        <form id="sign-out" class="sign-out" method="post" action="/logout" hidden>
+          <button type="submit" class="btn btn--quiet">Sign out</button>
+        </form>
       </div>
 
       <nav id="view-tabs" class="tabs shell-tabs" role="tablist">

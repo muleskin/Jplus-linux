@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>JARVIS · Run Control</title>
-    <script type="module" crossorigin src="/assets/dashboard-D6-lp-MR.js"></script>
+    <title>JARVIS · Run Control</title>
+    <script type="module" crossorigin src="/assets/dashboard-BI44OHjJ.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/ws-DSacz3h0.js">
-    <link rel="stylesheet" crossorigin href="/assets/dashboard-B2rQ9-3k.css">
+    <link rel="stylesheet" crossorigin href="/assets/dashboard-Cs_kELiu.css">
   </head>
   <body>
     <!-- Masthead: identity, link state, and the day's readouts. -->
@@ -21,6 +21,10 @@
           <span id="link-state-text">Link OK</span>
         </div>
         <div id="stats" class="shell-stats"></div>
+        <!-- Only shown when JARVIS_PASSCODE is set; a plain form so it needs no script. -->
+        <form id="sign-out" class="sign-out" method="post" action="/logout" hidden>
+          <button type="submit" class="btn btn--quiet">Sign out</button>
+        </form>
       </div>
 
       <nav id="view-tabs" class="tabs shell-tabs" role="tablist">
@@ -231,6 +235,6 @@
     <aside id="detail" class="pane brackets" hidden></aside>
     <aside id="memory-detail" class="pane brackets" hidden></aside>
     <div id="connection-banner" class="banner tone-bad" hidden></div>
-
+
   </body>
 </html>

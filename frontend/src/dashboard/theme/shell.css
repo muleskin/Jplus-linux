@@ -106,6 +106,7 @@ body::after {
    find out any other way — and the thing that decides whether JARVIS can
    answer at all. There is no spend here: JARVIS runs on a subscription and
    bills nobody, so a dollar figure would be a number that means nothing.  */
+.sign-out { margin: 0; }
 .shell-stats {
   margin-left: auto;
   display: flex;

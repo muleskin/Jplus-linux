@@ -6,7 +6,7 @@
 // `prompt`, `project_name` and the now-line all originate in model output or
 // on someone's disk: every one of them goes through textContent.
 import {
-  listRuns, getStats, getUsageLimits,
+  listRuns, getStats, getUsageLimits, getAuthEnabled,
   type RunRow, type UsageSnapshot,
 } from "./api";
 import { connectLive } from "./live";
@@ -495,6 +495,10 @@ function setupTabs(): void {
 
 document.addEventListener("DOMContentLoaded", () => {
   void reconcile();
+  void getAuthEnabled().then(
+    (enabled) => { document.getElementById("sign-out")!.hidden = !enabled; },
+    () => {},
+  );
   setupTabs();
   // Loads and live-updates in the background regardless of which tab is
   // showing, so switching to Sessions never shows a blank first paint.

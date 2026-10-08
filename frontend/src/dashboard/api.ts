@@ -123,6 +123,11 @@ export async function getUsageLimits(): Promise<UsageSnapshot> {
   return get<UsageSnapshot>("/api/usage/limits");
 }
 
+/** Whether sign-in (JARVIS_PASSCODE) is on, i.e. whether there is anything to sign out of. */
+export async function getAuthEnabled(): Promise<boolean> {
+  return (await get<{ enabled: boolean }>("/api/auth")).enabled;
+}
+
 export async function cancelRun(id: string): Promise<void> {
   await fetch(`/api/runs/${id}`, { method: "DELETE" });
 }
