@@ -35,7 +35,7 @@ all: build
 help:
 	@echo "Jplus build targets:"
 	@echo "  make build      - build ($(CONFIG)) for $(RID)"
-	@echo "  make run        - build & run the server in this terminal (dev)"
+	@echo "  make run        - build ($(CONFIG)) & run the server in this terminal"
 	@echo "  make release    - build in Release configuration"
 	@echo "  make publish    - self-contained single-file binary -> dist/$(RID)/Jplus"
 	@echo "  make package    - publish + assemble dist/jplus-$(RID).tar.gz"
@@ -53,7 +53,7 @@ build:
 	$(DOTNET) build $(PROJECT) -c $(CONFIG) -r $(RID)
 
 run:
-	$(DOTNET) run --project $(PROJECT) -r $(RID) -- --port 8340
+	$(DOTNET) run --project $(PROJECT) -c $(CONFIG) -r $(RID) -- --port 8340
 
 release:
 	$(DOTNET) build $(PROJECT) -c Release -r $(RID)
