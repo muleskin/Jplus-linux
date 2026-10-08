@@ -1,0 +1,11 @@
+.git
+bin/
+obj/
+dist/
+publish/
+data/
+frontend/node_modules/
+.env
+cert.pem
+key.pem
+docker-compose.yml

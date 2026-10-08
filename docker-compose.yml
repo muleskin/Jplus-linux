@@ -1,0 +1,27 @@
+services:
+  jarvis:
+    build: .
+    image: jplus:latest
+    container_name: jarvis
+    restart: unless-stopped
+    init: true                      # reaps the claude subprocesses the brain spawns
+    ports:
+      - "443:443"
+    sysctls:
+      net.ipv4.ip_unprivileged_port_start: "0"   # lets the non-root user bind 443
+    environment:
+      JARVIS_HOST: 0.0.0.0
+      JARVIS_LISTEN_PORT: "443"
+      JARVIS_DOMAIN: jarvis.oillie.cloud
+      JARVIS_CERT_DIR: /etc/letsencrypt/live/jarvis.oillie.cloud
+    env_file:
+      - path: .env                  # FISH_API_KEY etc. - copy Resources/env.example
+        required: false
+    volumes:
+      - jarvis-data:/data           # database, memory, logs, tool token
+      - jarvis-home:/home/jarvis    # Claude Code login (~/.claude, ~/.claude.json)
+      - /etc/letsencrypt:/etc/letsencrypt:ro   # certbot's live/ symlinks point into archive/
+
+volumes:
+  jarvis-data:
+  jarvis-home:
