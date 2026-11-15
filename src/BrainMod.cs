@@ -50,6 +50,7 @@ public static partial class BrainMod
         "mcp__jarvis__cancel_run",
         "mcp__jarvis__list_projects",
         "mcp__jarvis__open_in_browser",
+        "mcp__jarvis__show_results",
         "mcp__jarvis__open_in_terminal",
         "mcp__jarvis__read_page",
         "mcp__jarvis__look_at_page",

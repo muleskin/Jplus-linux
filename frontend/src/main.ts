@@ -9,6 +9,7 @@ import { createOrb, type OrbState } from "./orb";
 import { createVoiceInput, createAudioPlayer, createMicMonitor } from "./voice";
 import { createSocket } from "./ws";
 import { openSettings, checkFirstTimeSetup } from "./settings";
+import { showDisplay } from "./display";
 import "./style.css";
 
 // ---------------------------------------------------------------------------
@@ -190,6 +191,9 @@ socket.onMessage((msg) => {
     // A chunk TTS could not voice: show it instead of losing it
     console.log("[JARVIS]", msg.text);
     statusEl.textContent = String(msg.text);
+  } else if (type === "display") {
+    // show_results: what he looked up, on this page (rendered as text only).
+    showDisplay(msg);
   } else if (type === "notice") {
     // Shown, never spoken. The server sends one when it is about to be busy
     // for a few seconds (a context rotation), and an empty string to clear it.

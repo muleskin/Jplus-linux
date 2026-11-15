@@ -2302,6 +2302,7 @@ public static partial class Server
         ["run_status"] = Sync(a => ToolRunStatus(a)),
         ["cancel_run"] = async a => await ToolCancelRun(a),
         ["open_in_browser"] = async a => await ToolOpenInBrowser(a),
+        ["show_results"] = async a => await ToolShowResults(a),
         ["open_in_terminal"] = async a => await ToolOpenInTerminal(a),
         ["enable_session_inbox"] = async a => await ToolEnableSessionInbox(a),
         // Builds and documents (Part 3)
@@ -2346,6 +2347,8 @@ public static partial class Server
         "enable_session_inbox",
         // Both put a window on the user's screen and take their focus to do it.
         "open_in_browser", "open_in_terminal",
+        // It puts text on the JARVIS page. Only when the user is the one asking.
+        "show_results",
         // create_project writes a directory; cancel_run kills a process.
         // run_status is deliberately NOT here: it reads and says, nothing more.
         "create_project", "cancel_run",
@@ -2439,6 +2442,7 @@ public static partial class Server
         ["run_command"] = "it runs a command, it does not read",
         ["open_in_browser"] = "it opens a window, it does not read",
         ["open_in_terminal"] = "it opens a window, it does not read",
+        ["show_results"] = "it shows text on the JARVIS page, it does not read",
         ["open_in_editor"] = "it opens a window, it does not read",
         ["enable_session_inbox"] = "it edits a settings file, it does not read",
         ["remember"] = "it writes a memory, it does not read",
@@ -2462,6 +2466,12 @@ public static partial class Server
     // every future turn as TRUSTED system text. These three, and only these, are
     // gated on the GENERATION rather than the turn — see WriterUntrustedSource.
     public static readonly HashSet<string> MemoryWriters = ["remember", "project_note", "write_journal"];
+
+    // Acting tools that only DISPLAY, on the JARVIS page, what the turn already
+    // read. "Look it up and show me" is the whole point of show_results, so a
+    // web search before it must not refuse it. It is still user-origin only, and
+    // the page renders everything as text with http(s)-only links.
+    public static readonly HashSet<string> DisplayOnlyTools = ["show_results"];
 
     /// <summary>
     /// What foreign text stands between this tool and a write, or null. For
@@ -2499,7 +2509,8 @@ public static partial class Server
     {
         if (!readUntrusted) return null;
         if (!ActingTools.Contains(tool)) return null;
-        if (UntrustedReadingTools.Contains(tool) || TaintExemptActing.Contains(tool)) return null;
+        if (UntrustedReadingTools.Contains(tool) || TaintExemptActing.Contains(tool)
+            || DisplayOnlyTools.Contains(tool)) return null;
         if (MemoryWriters.Contains(tool))
             return $"untrusted_content_in_this_session — I've had {source} in " +
                    "front of me this session, sir, and what I write down I keep " +

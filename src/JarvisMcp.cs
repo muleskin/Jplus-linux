@@ -282,6 +282,35 @@ public static partial class JarvisMcp
     }
   },
   {
+    "name": "show_results",
+    "description": "Put what you found on the JARVIS page the user is looking at: a panel with a title, an optional short write-up, and up to 10 clickable results. Use it after WebSearch / WebFetch / read_page whenever the user asks you to show, display, list or pull up something, or when the answer is a list, a table of facts, or links they will want to click. It works wherever JARVIS is used, including from a phone or a remote server, because it shows on THIS page rather than opening a window. Keep `text` plain and short (bullets as '- ' lines are fine). Give each result the page title, its real https address and a one-line snippet; never invent an address. After showing, say one sentence — do not read the panel out.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Panel heading, e.g. 'Weather in Houston' or 'Search: best mesh routers'."
+        },
+        "text": {
+          "type": "string",
+          "description": "Optional: a short plain-text summary or answer shown above the results."
+        },
+        "items": {
+          "type": "array",
+          "description": "Optional: the results, best first (at most 10).",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string", "description": "The page's title." },
+              "url": { "type": "string", "description": "Its http(s) address." },
+              "snippet": { "type": "string", "description": "One or two lines on what it says." }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
     "name": "read_page",
     "description": "Read a web page yourself: its text comes straight back, in about a second. THE way to answer what a page says, what is on it, or what an error on it means. Use it whenever the user asks you about a site — never guess at a page's contents, and never spawn a run to go and look. Long pages come back topped and tailed, and you are told how much there was. Web addresses only.",
     "inputSchema": {
