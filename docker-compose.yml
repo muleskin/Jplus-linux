@@ -17,6 +17,7 @@ services:
       JARVIS_LISTEN_PORT: "443"
       JARVIS_DOMAIN: jarvis.oillie.cloud
       JARVIS_TLS: "off"             # Traefik terminates TLS
+      TZ: ${TZ:-America/Chicago}    # JARVIS's clock; containers are UTC otherwise
     env_file:
       - path: .env                  # FISH_API_KEY etc. - copy Resources/env.example
         required: false

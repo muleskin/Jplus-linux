@@ -20,7 +20,7 @@ FROM node:22-bookworm-slim
 ARG CLAUDE_CODE_VERSION=latest
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates libssl3 git curl tmux \
+ && apt-get install -y --no-install-recommends ca-certificates libssl3 git curl tmux tzdata \
  && rm -rf /var/lib/apt/lists/* \
  && npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
  && npm cache clean --force

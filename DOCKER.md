@@ -22,6 +22,7 @@ No certbot run is needed.
 | `JARVIS_HOST` | `0.0.0.0` | bind address |
 | `JARVIS_LISTEN_PORT` | `443` | port inside the container |
 | `JARVIS_DOMAIN` | `jarvis.oillie.cloud` | added to `JARVIS_ALLOWED_ORIGINS` so the Host/Origin checks accept it |
+| `TZ` | `America/Chicago` | time zone JARVIS gives the time in (set `TZ=` in `.env` to change) |
 | `JARVIS_PASSCODE` | unset | require sign-in at `/login` (set it in `.env`) |
 | `JARVIS_SESSION_DAYS` | `30` | how long a sign-in lasts |
 | `JARVIS_TLS` | `on` (compose sets `off`) | `off` serves plain HTTP for a TLS-terminating proxy |
